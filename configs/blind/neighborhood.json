@@ -1,0 +1,138 @@
+{
+  "_comment": [
+    "Neighbourhood models for locus sanity. PROTEIN MODELS ONLY -- the blind rule",
+    "applies here exactly as in anchors.json. These confirm what kind of locus an",
+    "anchor sits in; they never describe the nucleic acid being searched for.",
+    "",
+    "Models are grouped: a group is called present when any of its models hits an",
+    "ORF within `flank_bp` of the anchor. Groups, not individual models, are what",
+    "clade_decompose.py reasons about."
+  ],
+  "flank_bp": 10000,
+  "hmm_db": "/global/scratch/users/kh36969/pfam_db/Pfam-A.hmm",
+  "groups": {
+    "Cas1": {
+      "purpose": "CRISPR adaptation module; strong evidence of a real CRISPR locus",
+      "models": [
+        {
+          "name": "Cas_Cas1",
+          "acc": "PF01867"
+        }
+      ]
+    },
+    "Cas2": {
+      "purpose": "CRISPR adaptation module",
+      "models": [
+        {
+          "name": "CRISPR_Cas2",
+          "acc": "PF09827"
+        }
+      ]
+    },
+    "Cas5": {
+      "purpose": "Cascade backbone",
+      "models": [
+        {
+          "name": "Cas_Cas5d",
+          "acc": "PF09704"
+        },
+        {
+          "name": "CRISPR-assoc_Cas5p",
+          "acc": "PF27788"
+        }
+      ]
+    },
+    "Cas6": {
+      "purpose": "crRNA processing endoribonuclease; Cascade-associated",
+      "models": [
+        {
+          "name": "Cas6",
+          "acc": "PF09559"
+        },
+        {
+          "name": "CRISPR_Cas6",
+          "acc": "PF10040"
+        },
+        {
+          "name": "Cas_Cas6_C",
+          "acc": "PF01881"
+        }
+      ]
+    },
+    "Cas7": {
+      "purpose": "Cascade backbone",
+      "models": [
+        {
+          "name": "Cas_Cas7",
+          "acc": "PF05107"
+        }
+      ]
+    },
+    "Cascade": {
+      "purpose": "Generic CRISPR-associated protein; weaker than a named subunit",
+      "models": [
+        {
+          "name": "CRISPR_assoc",
+          "acc": "PF08798"
+        }
+      ]
+    },
+    "Cas8": {
+      "purpose": "Type I large subunit",
+      "models": [
+        {
+          "name": "Cas8b_N",
+          "acc": "PF24121"
+        },
+        {
+          "name": "Cas8b_C",
+          "acc": "PF24122"
+        }
+      ]
+    },
+    "HNH": {
+      "purpose": "Nuclease effector; with an RT suggests a defence module",
+      "models": [
+        {
+          "name": "HNH",
+          "acc": "PF01844"
+        },
+        {
+          "name": "HNH_2",
+          "acc": "PF13391"
+        },
+        {
+          "name": "HNH_3",
+          "acc": "PF13392"
+        }
+      ]
+    },
+    "TOPRIM": {
+      "purpose": "Topoisomerase-primase fold; common in RT defence systems",
+      "models": [
+        {
+          "name": "HEPN_Toprim_N",
+          "acc": "PF18871"
+        }
+      ]
+    },
+    "HEPN": {
+      "purpose": "RNase effector of many abortive-infection systems",
+      "models": [
+        {
+          "name": "HEPN",
+          "acc": "PF05168"
+        }
+      ]
+    },
+    "TIR": {
+      "purpose": "NAD-cleaving defence effector",
+      "models": [
+        {
+          "name": "CAP12-PCTIR_TIR",
+          "acc": "PF10137"
+        }
+      ]
+    }
+  }
+}

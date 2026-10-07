@@ -1,0 +1,165 @@
+{
+  "_comment": [
+    "Anchor definitions for blind ncRNA discovery. PROTEIN MODELS ONLY.",
+    "No model describing a guide nucleic acid may appear here: no RNA family",
+    "accessions, no repeat consensus, no length or fold rule for any known",
+    "guide, no annotation of a known scaffold RNA. Adding one breaks the blind",
+    "and invalidates every ground-truth control. Benchmark material lives in",
+    "configs/known_retron/ and data/known_retrons/, which no code reachable",
+    "from this file may read.",
+    "",
+    "`priority` resolves ORFs that hit several families. A group II intron",
+    "maturase hits GIIM *and* RVT_1; the specific family must win, otherwise",
+    "the assignment depends on which domain happened to score higher. Higher",
+    "number wins; score breaks ties within a priority level."
+  ],
+  "window": {
+    "flank_bp": 5000,
+    "orient_to_anchor_strand": true,
+    "min_contig_bp": 11000
+  },
+  "hmm_db": "/global/scratch/users/kh36969/pfam_db/Pfam-A.hmm",
+  "families": {
+    "GroupII_RT": {
+      "description": "Group II intron maturase. RT whose partner RNA is the intron itself \u2014 a natural RT+RNA blind test.",
+      "priority": 20,
+      "models": [
+        {
+          "name": "GIIM",
+          "acc": "PF08388"
+        },
+        {
+          "name": "Intron_maturas2",
+          "acc": "PF01348"
+        }
+      ]
+    },
+    "RT": {
+      "description": "Reverse transcriptase catalytic core, generic. Retron RT falls here. min_aa_len 250: RVT_3 otherwise pulls in a 138 aa host protein present in 10,784 identical copies.",
+      "priority": 10,
+      "models": [
+        {
+          "name": "RVT_1",
+          "acc": "PF00078"
+        },
+        {
+          "name": "RVT_2",
+          "acc": "PF07727"
+        },
+        {
+          "name": "RVT_3",
+          "acc": "PF13456"
+        }
+      ],
+      "min_aa_len": 250
+    },
+    "IS110": {
+      "description": "IS110/IS1111 transposase. Bridge-RNA-guided; RNA itself not modelled.",
+      "priority": 20,
+      "models": [
+        {
+          "name": "DEDD_Tnp_IS110",
+          "acc": "PF01548"
+        },
+        {
+          "name": "Transposase_20",
+          "acc": "PF02371"
+        }
+      ]
+    },
+    "Cas9": {
+      "description": "Cas9 protein domains only. Census: 236 anchors, 17 nr90 over 2 species -- too thin for an in-corpus control, but still scanned.",
+      "priority": 20,
+      "models": [
+        {
+          "name": "Cas9_REC",
+          "acc": "PF16592"
+        },
+        {
+          "name": "Cas9-BH",
+          "acc": "PF16593"
+        },
+        {
+          "name": "Cas9_PI",
+          "acc": "PF16595"
+        },
+        {
+          "name": "Cas9_C",
+          "acc": "PF18525"
+        },
+        {
+          "name": "Cas9_RuvC",
+          "acc": "PF22702"
+        }
+      ]
+    },
+    "Cas13": {
+      "description": "Cas13a effectors. Cas13-specific models only; a bare HEPN domain is far too generic to anchor on. Census: zero hits in this corpus.",
+      "priority": 20,
+      "models": [
+        {
+          "name": "Cas13a_endoribonuclease",
+          "acc": "PF28192"
+        },
+        {
+          "name": "Cas13a_C",
+          "acc": "PF28350"
+        }
+      ]
+    },
+    "Cas3": {
+      "description": "Type I Cas3 nuclease/helicase. Verified: 92.4% of census anchors have cascade genes within 10 kb, so the HD-clan promiscuity concern does not apply here.",
+      "priority": 20,
+      "models": [
+        {
+          "name": "Cas3_HD",
+          "acc": "PF18019"
+        },
+        {
+          "name": "Cas3_C",
+          "acc": "PF18395"
+        },
+        {
+          "name": "Cas3-like_C",
+          "acc": "PF21802"
+        }
+      ]
+    },
+    "TnpB_Cas12f": {
+      "description": "TnpB / Cas12f lineage. PF07282 is the TnpB TNB domain: census hits are 402 aa median, ~2 copies per genome -- IS200/IS605 TnpB, which Cas12f descends from. TnpB is omegaRNA-guided, so this is a strong anchor, but it must not be labelled Cas12.",
+      "priority": 20,
+      "models": [
+        {
+          "name": "Cas12f1-like_TNB",
+          "acc": "PF07282"
+        }
+      ],
+      "min_aa_len": 250
+    },
+    "Cas12": {
+      "description": "True Cas12/Cpf1 effectors, kept separate from the TnpB lineage. 1 census hit.",
+      "priority": 20,
+      "min_aa_len": 800,
+      "models": [
+        {
+          "name": "C2c1_RuvC-like",
+          "acc": "PF22126"
+        },
+        {
+          "name": "cas_Cpf1_2nd",
+          "acc": "PF21918"
+        },
+        {
+          "name": "Cpf1_PI-like",
+          "acc": "PF22222"
+        }
+      ]
+    }
+  },
+  "thresholds": {
+    "_comment": "Pfam gathering thresholds (--cut_ga) gate first; these are extra guards. A family may set min_aa_len to override the global one, applied after family assignment.",
+    "use_cut_ga": true,
+    "max_domain_evalue": 1e-05,
+    "min_aa_len": 100
+  }
+}

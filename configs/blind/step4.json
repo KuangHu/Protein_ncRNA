@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "Frozen step-4 block-caller defaults. Blind: every value here was chosen",
+    "from the within-family permutation decoys, never from any curated RNA set.",
+    "Changing a value means re-running the decoy null, because the score floors",
+    "are empirical properties of that null and not transferable constants."
+  ],
+  "reference_picker": "diverse_kmer",
+  "k_references": 3,
+  "min_recurrence": 0.5,
+  "score_floor": 0.80,
+  "high_confidence_floor": 0.90,
+
+  "min_len": 40,
+  "min_members": 5,
+  "max_coding_frac": 0.5,
+  "evalue": 1e-3,
+
+  "_rationale": {
+    "reference_picker": "Taking the longest windows gave three near-identical references and left diverged clade members with no hit at all, which is silent: they simply never contribute to recurrence. Spreading references across anchor-protein 5-mer diversity raised clade coverage from 29/43 to 38/43.",
+    "k_references": "Measured, not assumed. Past 3 the clade coverage falls (38 -> 37 -> 32 -> 30 at k=3,4,6,8) while the decoy rate climbs, because a reference set spanning the family's diversity also gives unrelated decoy members something to align to.",
+    "min_recurrence": "At 0.5 the real:decoy block ratio is ~6:1 and 29/43 real clades carry a block against 8/129 decoy clades. At 0.3 the decoy clade rate triples.",
+    "score_floor": "Empirical FDR is 0.062 at 0.80 and the decoy density is ~0 in four of five families.",
+    "high_confidence_floor": "Zero decoy blocks at or above 0.90 in every family."
+  },
+
+  "benchmark_only_families": ["Cas3"],
+  "_benchmark_only_note": "Cas3 is the one family whose decoys persist above the 0.80 floor (3 real vs 1.7 scaled decoy), and the family is provisional anyway since PF18019 is a promiscuous HD domain. Its blocks are reported but must not be treated as candidates on score alone."
+}

@@ -1,0 +1,23 @@
+# SLURM job stdout/stderr. Tied to job ids on one cluster; the provenance that
+# matters is recorded in REPORT.md and configs/blind/*.json.
+logs/
+
+# Pipeline output lives on scratch, not in the repo. Nothing here is an input.
+out/
+*.fasta.n??
+*.ndb
+*.nhr
+*.nin
+*.njs
+*.not
+*.nsq
+*.ntf
+*.nto
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+.DS_Store
+*.swp

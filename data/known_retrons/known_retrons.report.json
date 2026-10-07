@@ -1,0 +1,26 @@
+{
+  "rows": 1928,
+  "with_ncrna": 180,
+  "accession_styles": {
+    "patric": 1577,
+    "refseq_protein": 275,
+    "genbank_protein": 76
+  },
+  "rt_clades": {
+    "8": 427,
+    "1": 362,
+    "9": 324,
+    "3": 296,
+    "10": 198,
+    "2": 123,
+    "11": 123,
+    "7": 38,
+    "4": 25,
+    "6": 6,
+    "5": 5,
+    "Orphan": 1
+  },
+  "matchable_by_sequence": 180,
+  "matchable_by_accession": 0,
+  "note": "RetronDB identifiers are PATRIC or protein accessions; this pipeline calls ORFs de novo and genomes_db is keyed by assembly accession, so no accession join exists. Recall must be quoted against the 180 sequence-bearing rows."
+}
