@@ -100,14 +100,28 @@ def main() -> int:
             if sel == "True":
                 post[clade].append(aid)
 
-    fams = {c.split("__")[0] for c in pre}
+    # The two window producers lay the anchor proteins out differently:
+    # extract_windows.py writes one faa per *family*, bags_to_windows.py one per
+    # *clade*. Read both, keyed on whichever file exists, so the distinct-protein
+    # count is available on either corpus.
     seqs: dict[str, str] = {}
-    for fam in sorted(fams):
-        faa = args.census / "proteins" / f"{fam}.faa"
+    names = {c.split("__")[0] for c in pre} | set(pre)
+    for name in sorted(names):
+        faa = args.census / "proteins" / f"{name}.faa"
         if faa.exists():
             for h, s in read_fasta(str(faa)):
                 seqs.setdefault(h.split()[0], s)
     print(f"{len(pre)} clades, {len(seqs)} anchor proteins loaded")
+    # Every nr100 column is derived from `seqs`. With none loaded the tool still
+    # writes a full table, of zeros, and a cap that discarded 95% of a clade's
+    # distinct proteins is indistinguishable from one that discarded none. That
+    # is a silent wrong answer to the only question this script exists to ask.
+    if not seqs:
+        raise SystemExit(
+            f"no anchor proteins loaded from {args.census / 'proteins'}; "
+            f"expected <family>.faa or <clade>.faa for families "
+            f"{sorted({c.split('__')[0] for c in pre})[:5]}. Refusing to report "
+            f"nr100 counts of 0 as if the cap cost nothing.")
 
     nr = lambda ids: len({seqs[i] for i in ids if i in seqs})
     tmp_root = Path(tempfile.mkdtemp())

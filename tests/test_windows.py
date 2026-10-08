@@ -6,6 +6,7 @@ oriented window, with a marker block landing at the same offset in both.
 
 from __future__ import annotations
 
+import csv
 import random
 import sys
 from pathlib import Path
@@ -88,3 +89,69 @@ if __name__ == "__main__":
     test_contig_edge_truncation()
     test_min_contig_filter()
     print("all window tests passed")
+
+
+def test_cap_diagnostics_reads_both_protein_layouts(tmp_path):
+    """nr100 must be computable on either window producer's protein layout.
+
+    extract_windows.py writes `proteins/<family>.faa`; bags_to_windows.py writes
+    `proteins/<clade>.faa`. cap_diagnostics.py keyed only on the family name, so
+    on the bag corpus it loaded nothing and reported every clade as retaining 0
+    of 0 distinct proteins -- a table that looks exactly like a cap that cost
+    nothing, which is the one conclusion it exists to rule out.
+    """
+    import os
+    import subprocess
+    import sys as _sys
+
+    root = Path(__file__).resolve().parents[1]
+    # Both fixtures are a handful of 41-aa sequences; the SLURM guard exists to
+    # stop real corpora running on a login node, and this is what its documented
+    # override is for.
+    env = {**os.environ, "PN_ALLOW_LOGIN_NODE": "1"}
+    for layout, name in (("family", "FAM"), ("clade", "FAM__C1")):
+        w = tmp_path / layout
+        (w / "proteins").mkdir(parents=True)
+        with open(w / "cap_manifest.tsv", "w") as fh:
+            fh.write("clade_id\tanchor_id\tselected\treason\n")
+            for i in range(6):
+                fh.write(f"FAM__C1\ta{i}\t{str(i < 3)}\tstratified_kmer\n")
+        with open(w / "proteins" / f"{name}.faa", "w") as fh:
+            for i in range(6):
+                fh.write(f">a{i}\n{'MA' * 20}{'CDEFGH'[i]}\n")
+        r = subprocess.run(
+            [_sys.executable, str(root / "scripts" / "cap_diagnostics.py"),
+             "--windows", str(w), "--census", str(w), "--threads", "1",
+             "--out", str(w / "cap_diagnostics.tsv")],
+            capture_output=True, text=True, env=env)
+        assert r.returncode == 0, f"{layout} layout failed: {r.stderr[-2000:]}"
+        rows = list(csv.DictReader(open(w / "cap_diagnostics.tsv"),
+                                   delimiter="\t"))
+        assert len(rows) == 1
+        assert int(rows[0]["pre_cap_nr100"]) == 6, rows[0]
+        assert int(rows[0]["post_cap_nr100"]) == 3, rows[0]
+
+
+def test_cap_diagnostics_refuses_to_report_zero_proteins(tmp_path):
+    """With no protein file at all it must fail, not print nr100 0 -> 0."""
+    import os
+    import subprocess
+    import sys as _sys
+
+    root = Path(__file__).resolve().parents[1]
+    # Both fixtures are a handful of 41-aa sequences; the SLURM guard exists to
+    # stop real corpora running on a login node, and this is what its documented
+    # override is for.
+    env = {**os.environ, "PN_ALLOW_LOGIN_NODE": "1"}
+    w = tmp_path / "empty"
+    (w / "proteins").mkdir(parents=True)
+    with open(w / "cap_manifest.tsv", "w") as fh:
+        fh.write("clade_id\tanchor_id\tselected\treason\n")
+        fh.write("FAM__C1\ta0\tTrue\tunder_cap\n")
+    r = subprocess.run(
+        [_sys.executable, str(root / "scripts" / "cap_diagnostics.py"),
+         "--windows", str(w), "--census", str(w), "--threads", "1",
+         "--out", str(w / "cap_diagnostics.tsv")],
+        capture_output=True, text=True, env=env)
+    assert r.returncode != 0
+    assert "no anchor proteins loaded" in r.stderr
