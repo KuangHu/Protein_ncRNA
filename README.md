@@ -1,21 +1,21 @@
 # Protein_ncRNA
 
-> **STATUS: steps 1–6 built and run end to end. The published result numbers
-> are DEPRECATED pending a corrected re-run — see the banner in
-> [`REPORT.md`](REPORT.md).**
+> **STATUS: steps 1–6 built and run end to end on the corrected chain.**
+> Current results: [`REPORT.md`](REPORT.md), from job 26739540.
 >
-> Review found that step 3 estimated clade identity over raw anchors, which in
-> these duplicate-heavy families measures copy number rather than divergence.
-> Since that statistic gates clade selection, it decided which clades the whole
-> pipeline ran on. Corrected (deduplicate on sequence, then sample), the
-> selected clade set goes from 43 to 75 and every downstream number changes.
-> A corrected end-to-end run is in progress; its output will replace
-> `REPORT.md`.
+> An earlier published result set was withdrawn: step 3 had estimated clade
+> identity over raw anchors, which in these duplicate-heavy families measures
+> copy number rather than divergence. Since that statistic gates clade
+> selection, it decided which clades the whole pipeline ran on. Corrected
+> (deduplicate on sequence, then sample), the selected clade set went from 43
+> to 75 and every downstream number changed. The old report is kept as a
+> development log at
+> [`docs/DEPRECATED_REPORT_raw_anchor_identity.md`](docs/DEPRECATED_REPORT_raw_anchor_identity.md);
+> nothing in it is carried forward as a result.
 >
-> The method, the blind-control discipline and the test suite stand. What is
-> withdrawn is the specific set of candidate blocks and the one GroupII_RT
-> covariation hit, which must be rediscovered on the corrected clade set before
-> it is claimed again.
+> On the corrected run the within-family null is strong in all five families,
+> the 0.80 / 0.90 score floors were re-derived from it, real and decoy blocks
+> separate completely, and three blocks reach adequate covariation power.
 
 Blind discovery of protein-associated noncoding RNAs. A protein or locus is the
 **only** anchor: the discovery stage uses no known guide RNA, msr/msd, tracrRNA

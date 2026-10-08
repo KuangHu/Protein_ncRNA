@@ -14,24 +14,31 @@
   "min_members": 5,
   "max_coding_frac": 0.5,
   "evalue": 0.001,
+  "_floor_derivation": [
+    "RE-DERIVED from the corrected run (job 26739540: dedup-sequence clade",
+    "identity, stratified window cap, quota-constrained decoys; 75 clades,",
+    "225 decoy clades). The two floors happen to land on the same values as",
+    "the earlier invalidated run, but they are re-derived, not carried over.",
+    "Corrected decoy composite-score distribution, n=45 decoy blocks:",
+    "  p50 0.4387 | p90 0.6553 | p95 0.6658 | p99 0.7194 | max 0.7194",
+    "Corrected real distribution, n=263 blocks:",
+    "  p50 0.7900 | p90 0.9770 | p95 0.9864 | max 0.9940",
+    "0.80 sits 0.08 above the highest decoy block in the entire run, so the",
+    "floor is above the whole observed null rather than at a chosen quantile",
+    "of it. Caveat recorded deliberately: only Cas3 (28) and GroupII_RT (17)",
+    "produced any decoy blocks at all, so the floor is measured on those two",
+    "families' nulls; IS110, RT and TnpB_Cas12f contributed zero decoy blocks",
+    "and therefore constrain the floor only from above."
+  ],
   "_rationale": {
     "reference_picker": "Taking the longest windows gave three near-identical references and left diverged clade members with no hit at all, which is silent: they simply never contribute to recurrence. Spreading references across anchor-protein 5-mer diversity raised clade coverage from 29/43 to 38/43.",
     "k_references": "Measured, not assumed. Past 3 the clade coverage falls (38 -> 37 -> 32 -> 30 at k=3,4,6,8) while the decoy rate climbs, because a reference set spanning the family's diversity also gives unrelated decoy members something to align to.",
-    "min_recurrence": "At 0.5 the real:decoy block ratio is ~6:1 and 29/43 real clades carry a block against 8/129 decoy clades. At 0.3 the decoy clade rate triples.",
-    "score_floor": "Empirical FDR is 0.062 at 0.80 and the decoy density is ~0 in four of five families. [PROVISIONAL: measured on the invalidated clade set.]",
-    "high_confidence_floor": "Zero decoy blocks at or above 0.90 in every family. [PROVISIONAL: measured on the invalidated clade set.]"
+    "min_recurrence": "At 0.5 the real:decoy block ratio is ~6:1 and 29/43 real clades carry a block against 8/129 decoy clades. At 0.3 the decoy clade rate triples. [Measured on the earlier clade set; the corrected run gives 66/75 real vs 25/225 decoy clades with a block at this setting.]",
+    "score_floor": "Zero decoy blocks at or above 0.80 in every family on the corrected null; the highest decoy block in the run scores 0.7194. Empirical FDR 0.0 in all five families. See _floor_derivation.",
+    "high_confidence_floor": "Zero decoy blocks at or above 0.90 in every family, with the same 0.7194 ceiling on the null. 68 of 263 real blocks clear it."
   },
   "benchmark_only_families": [
     "Cas3"
   ],
-  "_benchmark_only_note": "Cas3 was flagged because its decoys cleared the floor at FDR 0.556 -- but that null is now known to have been degenerate (Cas3 had too few clades to draw decoys from, so decoys were largely redrawn from the clade they mirrored). The corrected run gives Cas3 6 clades, so the flag must be re-tested against a real null rather than carried over. PF18019 being a promiscuous HD domain remains a separate, independent reason for caution.",
-  "_PROVISIONAL": [
-    "score_floor and high_confidence_floor below were derived from the 43-clade",
-    "null that the raw-anchor identity metric produced, and that clade set is",
-    "invalidated. They are retained only so the corrected run has a fixed",
-    "operating point to report against -- they are NOT yet properties of the",
-    "corrected null. Re-derive them from the corrected decoy distribution and",
-    "state in REPORT.md that they were re-derived; do not quote them as though",
-    "they had carried over."
-  ]
+  "_benchmark_only_note": "Retained, with the reason restated rather than carried over. The old justification (decoys cleared the floor at FDR 0.556) is withdrawn: that null was degenerate, and on the corrected run Cas3 has 6 clades, a strong null, and 0 decoy blocks at or above 0.80, so Cas3 passes the FDR test. The flag stays for two reasons that survive the correction: Cas3 supplies the highest-scoring decoy blocks in the entire run (max 0.7194, against GroupII_RT's 0.5648), so it has the narrowest real-vs-decoy margin of any family; and PF18019 is a promiscuous HD domain, which is an independent reason its 'clade' may not be a coherent evolutionary unit. Lifting the flag is a deliberate decision to be made on evidence, not a default."
 }
