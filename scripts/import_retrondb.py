@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Normalize the RetronDB census CSV into known_retrons.tsv.
+"""UNBLIND. Normalize the RetronDB census CSV into known_retrons.tsv.
 
 Benchmark data only — see data/known_retrons/README.md. Nothing that produces
 blind predictions may read the output.

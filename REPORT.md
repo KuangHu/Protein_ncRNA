@@ -28,6 +28,27 @@ about one between runs. Each count quoted is the one in the named file.
 
 ---
 
+## Summary
+
+> After correcting exact-duplicate protein inflation in clade divergence
+> estimates, a stratified cap, and a quota-preserving same-family permutation
+> null, the blind protein-anchored pipeline selected 75 clades and called 128
+> recurrent noncoding blocks above a 0.80 score floor. No permutation decoy
+> reached this score. Among 121 non-Cas3 blocks folded de novo, three had
+> adequate R-scape power and significant covariation with zero false-positive
+> pairs, including one generic RT clade with a 694-bp upstream block abutting
+> the RT ORF.
+
+**Pipeline status: frozen.** Steps 3 and 4 now carry two independent locks — a
+quota-constrained same-family null (decoy max 0.719) and adequate-power R-scape
+support in three independent blocks. Changing the cap, the reference picker or
+the score floor invalidates both and requires a full-chain re-run, so none of
+them moves absent a coordinate bug or evidence that the top hits are artifacts.
+Work from here is interpretation of the existing candidates, not a search for
+higher scores.
+
+---
+
 ## 1. Selected clades
 
 `clades_final_26739540/selected_clade_summary.tsv`
@@ -146,18 +167,34 @@ contributed zero, so they constrain the floor only from above.
 | p90 composite | 0.977 | 0.655 |
 | max composite | 0.994 | 0.719 |
 
-| family | blocks ≥0.80 | decoy (scaled) ≥0.80 | FDR | blocks ≥0.90 | decoy ≥0.90 | null |
-|---|---:|---:|---:|---:|---:|---|
-| RT | 62 | 0.0 | 0.0 | 30 | 0.0 | strong |
-| IS110 | 29 | 0.0 | 0.0 | 18 | 0.0 | strong |
-| GroupII_RT | 27 | 0.0 | 0.0 | 15 | 0.0 | strong |
-| Cas3 | 7 | 0.0 | 0.0 | 4 | 0.0 | strong |
-| TnpB_Cas12f | 3 | 0.0 | 0.0 | 1 | 0.0 | strong |
-| **total** | **128** | | | **68** | | |
+| family | blocks ≥0.80 | decoy blocks ≥0.80 | blocks ≥0.90 | decoy blocks ≥0.90 | null |
+|---|---:|---:|---:|---:|---|
+| RT | 62 | 0 | 30 | 0 | strong |
+| IS110 | 29 | 0 | 18 | 0 | strong |
+| GroupII_RT | 27 | 0 | 15 | 0 | strong |
+| Cas3 | 7 | 0 | 4 | 0 | strong |
+| TnpB_Cas12f | 3 | 0 | 1 | 0 | strong |
+| **total** | **128** | **0** | **68** | **0** | |
 
-**Real and decoy separate completely.** The two distributions do not overlap
-anywhere above 0.72 — not at the floor, not in any family, not in the family
-whose null is strongest. Empirical FDR is 0.0 at both floors throughout.
+### How to state this, and how not to
+
+The number this run supports is **not** "FDR = 0". What was measured is:
+
+> Across 225 same-family quota-constrained permutation decoy clades, **no decoy
+> block reached 0.80**. At the resolution this empirical null provides, the
+> region above 0.80 is decoy-free.
+
+That is an empirical upper bound on the false-discovery rate, not an estimate of
+it. 225 decoy clades yielding 45 blocks can show the absence of decoy support at
+a threshold; they cannot resolve a true rate below roughly 1/45. A reader who
+takes "FDR 0.0" at face value is reading a sample size as a measurement. The
+`step4_family_null.tsv` column is named `empirical_fdr_ge_080` and prints 0.0 —
+that column is a ratio against an observed count of zero, and should be quoted as
+"no observed decoy support", never as a rate.
+
+Within that limit the separation is unambiguous: the two distributions do not
+overlap anywhere above 0.72, in any family, including the family whose decoys
+score highest.
 
 This answers the question the correction was run to answer: *on the corrected
 clade set, does blind recurrence still produce noncoding blocks above the
@@ -256,7 +293,129 @@ masked looks like — and it recurs here independently across GroupII_RT clades.
   limiting resource is distinct sequences per clade (34 of 75 clades have <20),
   not folding or alignment.
 - Validate anything biochemically. Every claim here is computational.
-- Clear Cas3. It passes the FDR test on the corrected null but supplies the
-  highest-scoring decoy blocks in the run, and PF18019 remains a promiscuous HD
-  domain; `benchmark_only` is retained on those grounds, with the old
-  justification withdrawn.
+- Clear Cas3. It shows no decoy support above the floor on the corrected null,
+  but it supplies the highest-scoring decoy blocks in the run, and PF18019
+  remains a promiscuous HD domain; `benchmark_only` is retained on those
+  grounds, with the old justification withdrawn.
+- Measure a false-discovery *rate*. See "How to state this" in section 3: 225
+  decoy clades bound the rate from above, they do not estimate it.
+
+---
+
+# Interpretation reports
+
+The pipeline is frozen. What follows reads the frozen candidates; it does not
+re-score them. Produced by `scripts/discovery_shortlist.py`,
+`scripts/locus_report.py` and `scripts/interpret_locus.py` (the last of which is
+UNBLIND and marked so).
+
+## 7. Top RT supported locus — `RT GCA_000951815.1 … B002`
+
+The discovery branch's best result, and the one worth human attention first. The
+two GroupII_RT supported blocks are positive-control-like: a structured RNA arm
+beside a group II intron RT is the expected answer. This one is a generic RT
+clade with no known RNA on it.
+
+`step4_candidates_final_26739540/loci/RT_000951815_B002.*`,
+`interpretation/RT_000951815_B002.interpretation.md`
+
+**Clade.** 9,643 anchors capped to 500; **155 distinct proteins before the cap
+and 155 after** — the cap cost nothing. Post-cap median identity 0.459, so the
+clade is genuinely diverged rather than a duplicate stack. That divergence is
+what bought the covariation power.
+
+**Geometry.** 483 members, 96.6% of the clade, **all 483 on the same strand**.
+The block spans x = −694 to x = 0: it ends exactly on the RT start codon, with
+start IQR 12 bp and end IQR 17 bp across 483 genomes.
+
+The locus table makes a stronger statement than the triage row does. Median
+`block_frac_of_run` is **1.000** and median `run_len` is **694** = the block
+length: the block is not *inside* an intergenic region, it **is** the entire
+noncoding run. Median distance to the upstream ORF is 0 and to the downstream
+ORF (the RT itself) is 0. The element occupies the complete gap between the
+preceding gene and the RT, exactly, in the median genome.
+
+**Known-RNA overlap.** None. 0 of 483 members overlap any RetronDB ncRNA,
+maximum overlap 0 bp. It ranks first in its clade. This clade is not one of the
+10 retron-positive RT clades.
+
+**Neighbourhood.** Only 8 of 483 anchors have a scanned marker nearby (HNH,
+median 5.1 kb). No cascade genes. On the scanned marker set this does not look
+like a CRISPR locus, and there is not enough HNH/TOPRIM/TIR to call it a defence
+RT either. Worth stating plainly: only those groups were scanned, so this is
+weak evidence of absence, not evidence of a new class.
+
+**Covariation.** 14 covarying pairs, 0 false positives, PPV 100%, and they fall
+on **7 distinct helices** rather than piling into one hairpin:
+
+| helix | i | j | pairs | loop span | max power |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 173 | 664 | 1 | 491 | 0.20 |
+| 2 | 179–184 | 213–218 | 4 | 34 | 0.42 |
+| 3 | 250 | 261 | 1 | 11 | 0.28 |
+| 4 | 298–300 | 358–360 | 2 | 60 | 0.39 |
+| 5 | 307–308 | 329–330 | 2 | 22 | 0.20 |
+| 6 | 343 | 350 | 1 | 7 | 0.11 |
+| 7 | 463–466 | 471–474 | 3 | 8 | 0.28 |
+
+Seven separately supported helices including one long-range pair (173×664) is a
+multi-domain fold, not a single stem-loop that happened to covary.
+
+**Reading.** A clade-specific structured noncoding element filling the entire
+intergenic gap immediately upstream of a reverse transcriptase, in 96.6% of a
+155-distinct-protein clade, on one strand, with covariation support on seven
+helices and no overlap with any described retron ncRNA. This is the shape the
+project was built to find, and it was found without any RNA prior.
+
+## 8. High-score anchor-abutting blocks
+
+`triage/anchor_abutting.tsv` — score ≥ 0.90, non-Cas3, near edge within 10 bp of
+the anchor boundary with edge IQR ≤ 25 bp. **21 blocks**: 10 RT, 9 GroupII_RT,
+2 IS110. Typical gap is 0 bp with IQR 0.
+
+A note on the filter, because the obvious column is the wrong one.
+`distance_to_anchor` is the offset of the block's *start*. For a downstream
+block, 0 means it abuts the stop codon; for an upstream block it is the *far*
+edge, and 0 is impossible by construction. Filtering `distance_to_anchor == 0`
+selects 7 blocks, **all downstream**, and drops every upstream abutting block —
+including both 0.994 GroupII_RT blocks and the supported RT block. So
+`anchor_gap_bp` measures whichever edge faces the anchor, with
+`anchor_edge_iqr_bp` for its tightness.
+
+The signature is not GroupII-specific: **10 of 21 are plain RT and 2 are IS110**,
+across both orientations (12 ending on a start codon, 9 beginning on a stop
+codon). A boundary shared with an ORF to the base across hundreds of genomes is
+a cis-module geometry independent of covariation power, and most of these 21 are
+underpowered rather than negative.
+
+## 9. Discovery triage top 10
+
+`triage/discovery_top10.tsv` — GroupII_RT, Cas3 and known-retron overlaps
+removed, leaving a pool of 91 blocks (59 RT, 29 IS110, 3 TnpB_Cas12f); 3 blocks
+excluded as known-retron overlaps.
+
+| # | family | score | verdict | power | TP/FP | member frac | side | gap bp | len | coding |
+|---:|---|---:|---|---|---|---:|---|---:|---:|---:|
+| 1 | RT | 0.966 | **supported** | adequate | 14/0 | 0.966 | up | **0** | 694 | 0.18 |
+| 2 | RT | 0.986 | borderline | none | 1/0 | 0.992 | up | 1280 | 178 | 0.46 |
+| 3 | IS110 | 0.982 | borderline | low | 3/0 | 0.984 | up | **0** | 70 | 0.68 |
+| 4 | RT | 0.971 | borderline | none | 1/0 | 0.992 | up | **0** | 671 | 0.18 |
+| 5 | RT | 0.902 | borderline | none | 4/0 | 0.902 | up | 1506 | 319 | 0.30 |
+| 6 | IS110 | 0.894 | borderline | none | 1/0 | 0.936 | down | 27 | 237 | 0.13 |
+| 7 | RT | 0.886 | borderline | none | 1/0 | 0.886 | up | 348 | 139 | 0.52 |
+| 8 | RT | 0.878 | borderline | none | 1/0 | 0.898 | up | 1268 | 386 | 0.28 |
+| 9 | RT | 0.856 | borderline | none | 2/2 | 0.856 | down | 178 | 146 | 0.00 |
+| 10 | RT | 0.856 | borderline | none | 1/0 | 0.856 | down | 926 | 255 | 0.37 |
+
+Ranked by verdict, then PPV band, then score, member fraction, anchor gap and
+coding fraction. The PPV band is not cosmetic: `covariation_borderline` only
+asks whether TP > 0, so a block with **TP=1 and FP=118 (PPV 0.84%)** carries the
+same label as one with TP=4 and FP=0, and ranking on score alone put the first
+above the second. Two such blocks (FP=118 and FP=5) ranked 6th and 4th before
+the band was added and are now outside the top 10.
+
+Ranks 2–10 are all underpowered or low-power. They are a queue for deeper
+annotation, not nine more results — only #1 has been tested with adequate power.
+#4 is the one to look at next: 671 bp, abutting the anchor at 0 bp, 99.2% member
+fraction, 18% coding, TP=1/FP=0. Same shape as #1, without the sequence
+divergence to prove it.

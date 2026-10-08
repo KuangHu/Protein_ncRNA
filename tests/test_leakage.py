@@ -24,6 +24,24 @@ BLIND_DIR = ROOT / "configs/blind"
 KNOWN_DIR = ROOT / "configs/known_retron"
 CONFIGS = sorted(str(p.relative_to(ROOT)) for p in BLIND_DIR.glob("*.json"))
 
+# The blind chain: every script that runs before a prediction is frozen. None of
+# these may reference the benchmark branch, whatever it is named later.
+BLIND_CHAIN = [
+    "genomes_db_report.py", "collect_anchors.py", "refilter_census.py",
+    "neighborhood_scan.py", "clade_decompose.py", "extract_windows.py",
+    "permutation_null.py", "discover_blocks.py", "cap_diagnostics.py",
+    "export_blocks.py", "fold_blocks.py", "locus_report.py",
+]
+
+# Boundary scripts: they compute blind columns and then *append* benchmark
+# annotation to the same table. They are not in BLIND_CHAIN because they do
+# legitimately read the benchmark, and they are not free of it either -- the
+# invariant is that every value sourced from the benchmark lands in a column
+# named `benchmark_*`, so no blind column can ever be contaminated by one and a
+# reader can tell the two apart by the column name alone.
+BOUNDARY_SCRIPTS = ["candidate_table.py", "triage_report.py",
+                    "discovery_shortlist.py"]
+
 # Terms that only appear when someone has started describing the RNA itself.
 LEAK = re.compile(
     r"(msr|msd|omega[\s_-]?rna|tracr[\s_-]?rna|cr[\s_-]?rna|bridge[\s_-]?rna"
@@ -79,12 +97,71 @@ def test_known_retron_branch_is_separate():
             readers.append(str(py.relative_to(ROOT)))
     assert not readers, ("blind discovery code must not read the benchmark "
                          "branch: " + ", ".join(readers))
-    # The scripts that produce selected_clades.tsv must also stay clean.
-    for name in ("clade_decompose.py", "collect_anchors.py", "refilter_census.py",
-                 "neighborhood_scan.py"):
-        t = (ROOT / "scripts" / name).read_text()
-        assert "known_retron" not in t, f"{name} reads the benchmark branch"
-    print("ok  known-retron benchmark is isolated from blind discovery")
+    # Every script in the blind chain must stay clean -- not just the four that
+    # happened to be listed when this test was written. A new script that joins
+    # the chain and reads the benchmark is exactly the leak this guards against,
+    # and an allowlist of names would not have caught it.
+    for name in BLIND_CHAIN:
+        p = ROOT / "scripts" / name
+        assert p.exists(), f"stale BLIND_CHAIN entry {name}"
+        assert "known_retron" not in p.read_text(), \
+            f"{name} is in the blind chain and reads the benchmark branch"
+    # Scripts that legitimately read annotation must say so in their name or
+    # docstring, so "does this file see the answers?" is answerable by reading
+    # the top of it rather than by tracing imports.
+    for p in sorted((ROOT / "scripts").glob("*.py")):
+        t = p.read_text()
+        if ("known_retron" not in t or p.name in BLIND_CHAIN
+                or p.name in BOUNDARY_SCRIPTS):
+            continue
+        head = t[:t.find("\n\n", t.find('"""'))] if '"""' in t else ""
+        assert ("UNBLIND" in head or "benchmark" in p.name
+                or "known_retron" in p.name or "annotate" in p.name), (
+            f"{p.name} reads the benchmark branch but is not marked UNBLIND "
+            "in its docstring, named as a benchmark script, or listed in "
+            "BOUNDARY_SCRIPTS")
+    print(f"ok  known-retron benchmark isolated from {len(BLIND_CHAIN)} "
+          "blind-chain scripts")
+
+
+def test_boundary_scripts_quarantine_benchmark_columns():
+    """Annotation may be appended to a blind table; it may not be mixed into it.
+
+    `candidate_table.py` and `triage_report.py` both compute every blind column
+    and then join benchmark annotation onto the same rows. That is fine, and it
+    is also exactly where a leak would be invisible: one `r["score"] = ...`
+    sourced from the benchmark dict and the discovery score is no longer blind.
+
+    The invariant is structural, so it can be checked structurally: every
+    assignment whose value reads the benchmark annotation must target a column
+    named `benchmark_*`.
+    """
+    import ast as _ast
+    bad = []
+    for name in BOUNDARY_SCRIPTS:
+        p = ROOT / "scripts" / name
+        assert p.exists(), f"stale BOUNDARY_SCRIPTS entry {name}"
+        tree = _ast.parse(p.read_text())
+        # Names bound to the benchmark annotation, found by the file it reads.
+        for node in _ast.walk(tree):
+            if not isinstance(node, _ast.Assign):
+                continue
+            src = _ast.unparse(node.value)
+            if not any(t in src for t in ("overlaps_known_retron",
+                                          "members_overlapping_known",
+                                          "benchmark_overlaps_known_ncrna",
+                                          "benchmark_block_overlap")):
+                continue
+            for tgt in node.targets:
+                key = (tgt.slice.value if isinstance(tgt, _ast.Subscript)
+                       and isinstance(getattr(tgt, "slice", None), _ast.Constant)
+                       else None)
+                if isinstance(key, str) and not key.startswith("benchmark_"):
+                    bad.append(f"{name}: benchmark value assigned to "
+                               f"non-benchmark column {key!r}")
+    assert not bad, "\n".join(bad)
+    print(f"ok  {len(BOUNDARY_SCRIPTS)} boundary scripts keep benchmark values "
+          "in benchmark_* columns")
 
 
 def test_no_rna_terms_in_model_names_or_paths():
@@ -233,6 +310,7 @@ def test_compute_scripts_require_slurm():
 if __name__ == "__main__":
     test_blind_config_dir_is_clean()
     test_known_retron_branch_is_separate()
+    test_boundary_scripts_quarantine_benchmark_columns()
     test_no_rna_terms_in_model_names_or_paths()
     test_every_accession_is_pfam()
     test_hmm_db_is_protein()

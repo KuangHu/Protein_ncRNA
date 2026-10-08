@@ -48,6 +48,29 @@ _db = _d.module_from_spec(_spec)
 _spec.loader.exec_module(_db)
 
 
+def short_name(bid: str, seen: set[str]) -> str:
+    """A filesystem stem that is unique across clades, not just within one.
+
+    `bid.rsplit("__")[-1]` gives B000/B001/..., which every clade reuses, so two
+    blocks from different clades collide and the second silently overwrites the
+    first. Family plus a slice of the clade's accession plus the block suffix is
+    unique in practice; the counter is there so it is unique in principle.
+    """
+    fam = bid.split("__", 1)[0]
+    blk = bid.rsplit("__", 1)[-1]
+    tag = ""
+    for part in bid.split("__"):
+        if part.startswith("GCA_") or part.startswith("GCF_"):
+            tag = part.split("_ENA_")[0].split(".")[0].replace("GCA_", "")[:10]
+            break
+    base = "_".join(p for p in (fam, tag, blk) if p)
+    name, n = base, 2
+    while name in seen:
+        name, n = f"{base}_{n}", n + 1
+    seen.add(name)
+    return name
+
+
 def read_tsv(path: Path) -> list[dict]:
     with open(path) as fh:
         cols = next(fh).rstrip("\n").split("\t")
@@ -161,6 +184,7 @@ def main() -> int:
     args = ap.parse_args()
     require_slurm("locus report")
     args.out.mkdir(parents=True, exist_ok=True)
+    out_stems: set[str] = set()   # guards against cross-clade filename collisions
 
     blocks = {b["block_id"]: b for b in read_tsv(args.blocks / "blocks.tsv")}
     members = defaultdict(list)
@@ -235,7 +259,12 @@ def main() -> int:
                     "upstream_orf_end_rel", "dist_upstream_orf",
                     "downstream_orf_start_rel", "dist_downstream_orf",
                     "other_blocks_in_run", "anchor_len", "win_len"]
-            short = bid.rsplit("__", 1)[-1]
+            # The block suffix alone (B002) is not unique: every clade numbers
+            # its blocks from B000, so reporting an RT B002 and a GroupII_RT
+            # B002 in one run silently overwrote the first with the second.
+            # Prefix with the family and a short clade tag to make the stem
+            # unique without making it unreadable.
+            short = short_name(bid, out_stems)
             stem = args.out / f"{short}"
             write_tsv(Path(f"{stem}.locus_table.tsv"), rows, cols)
             svg_plot(Path(f"{stem}.relative_coordinate_plot.svg"), rows, bid, clade_blocks)
