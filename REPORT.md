@@ -30,6 +30,29 @@ about one between runs. Each count quoted is the one in the named file.
 
 ## Summary
 
+> ## ⚠ Step-4 numbers are being recomputed (job 26743719)
+>
+> A coordinate bug was found after this report was written: `trim_member`
+> measured the block trim on the reference axis and applied it verbatim to the
+> member axis, but a BLAST HSP is gapped, so the two axes differ in length. Where
+> a member carried a deletion and its overlap with the block was small, the trims
+> together exceeded the member's span and the interval came back with
+> `end < start`.
+>
+> In this run that is **85 of 66,603 members across 20 of 308 blocks** (73 on the
+> plus strand, so not the minus-strand mirror bug fixed earlier). No score left
+> the valid range here, so the table below is not visibly wrong, but `median_len`
+> and `length_consistency` are wrong for those 20 blocks and member counts move
+> once degenerate members are dropped — which moves `recurrence` and the
+> composite. Treat every step-4 count below as provisional until the re-run lands.
+>
+> **None of the three covariation-supported blocks has an inverted member**, so
+> section 4 and the interpretation reports stand.
+>
+> Fixed in `1db697e`; the same bug produced a composite of 2.15 on the MGE
+> insertion corpus, which is what exposed it.
+
+
 > After correcting exact-duplicate protein inflation in clade divergence
 > estimates, a stratified cap, and a quota-preserving same-family permutation
 > null, the blind protein-anchored pipeline selected 75 clades and called 128
