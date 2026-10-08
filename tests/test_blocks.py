@@ -69,6 +69,66 @@ def test_block_wider_than_segment_is_not_extended():
         assert trim_member(100, 200, 50, 300, 500, 600, strand) == (500, 600)
 
 
+def test_gapped_hsp_trim_never_crosses_coordinates():
+    """A member trimmed to nothing is dropped, not returned inverted.
+
+    The trim is measured on the reference axis and applied to the member axis,
+    but a BLAST HSP is gapped, so those two axes are different lengths. Where
+    the member carries a deletion and the overlap with the block is small, the
+    left and right trims together exceed the member's own span and the result
+    comes back with `end < start` -- an interval denoting no sequence at all.
+
+    It reached production. 85 of 66,603 members in the published genomic run
+    were inverted (73 of them on the PLUS strand, so this is not the
+    minus-strand mirror bug), and on the insertion corpus one block came back
+    with median_len = -67, which drove `length_consistency = 1 - mad/med_len`
+    above 1 and produced a composite score of 2.15 on a scale ending at 1.
+    """
+    # Scaling is the fix; dropping is the backstop. A 100 bp reference segment
+    # against a 20 bp member is a heavily gapped HSP, and trimming 60 bp off the
+    # reference axis verbatim would cut more than the member has -- scaled, it
+    # cuts 12 and the interval stays valid.
+    for strand in ("+", "-"):
+        t = trim_member(100, 200, 160, 170, 500, 520, strand)
+        assert t is not None and t[1] > t[0], (strand, t)
+
+    # Where even the scaled trim leaves nothing, the member is dropped rather
+    # than returned crossed.
+    for strand in ("+", "-"):
+        assert trim_member(100, 200, 160, 170, 500, 501, strand) is None, strand
+
+    # And over a sweep, nothing may ever come back crossed.
+    bad = []
+    for ref_span, mem_span in ((100, 10), (100, 40), (100, 250), (50, 50)):
+        a, b, ma, mb = 100, 100 + ref_span, 500, 500 + mem_span
+        for ba in range(a - 20, b + 20, 7):
+            for bb in range(ba + 1, b + 40, 11):
+                if min(b, bb) - max(a, ba) <= 0:
+                    continue
+                for strand in ("+", "-"):
+                    t = trim_member(a, b, ba, bb, ma, mb, strand)
+                    if t is None:
+                        continue
+                    fa, fb = t
+                    if fb <= fa:
+                        bad.append((ref_span, mem_span, ba, bb, strand, fa, fb))
+                    if fa < ma or fb > mb:
+                        bad.append(("escaped HSP", ref_span, mem_span, ba, bb,
+                                    strand, fa, fb))
+    assert not bad, f"{len(bad)} crossed/escaped intervals, e.g. {bad[:3]}"
+
+
+def test_trim_scales_with_the_hsp_length_ratio():
+    """The member axis is cut in proportion, not by the reference's bp count."""
+    # Member span is half the reference span, so a 40 bp reference trim is a
+    # 20 bp member trim.
+    assert trim_member(0, 100, 40, 100, 0, 50, "+") == (20, 50)
+    # Member span is double, so the same 40 bp reference trim cuts 80 bp.
+    assert trim_member(0, 100, 40, 100, 0, 200, "+") == (80, 200)
+    # Ungapped (1:1) keeps the original behaviour exactly.
+    assert trim_member(100, 200, 120, 180, 500, 600, "+") == (520, 580)
+
+
 def test_subtract_trims_rather_than_discards():
     """An HSP spanning a gene and the intergenic stretch beside it keeps the
     intergenic part. Dropping such an HSP whole is what reduced a 493-member

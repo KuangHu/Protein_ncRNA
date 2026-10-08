@@ -31,6 +31,7 @@ BLIND_CHAIN = [
     "neighborhood_scan.py", "clade_decompose.py", "extract_windows.py",
     "permutation_null.py", "discover_blocks.py", "cap_diagnostics.py",
     "export_blocks.py", "fold_blocks.py", "locus_report.py",
+    "bags_to_windows.py", "expand_by_homology.py", "bag_query_proteins.py",
 ]
 
 # Boundary scripts: they compute blind columns and then *append* benchmark
@@ -297,7 +298,8 @@ def test_compute_scripts_require_slurm():
     need = ["clade_decompose.py", "collect_anchors.py", "neighborhood_scan.py",
             "extract_windows.py", "refilter_census.py", "annotate_known_retrons.py",
             "genomes_db_report.py", "discover_blocks.py", "export_blocks.py",
-            "locus_report.py", "triage_report.py", "cap_diagnostics.py"]
+            "locus_report.py", "triage_report.py", "cap_diagnostics.py",
+            "bags_to_windows.py", "expand_by_homology.py"]
     missing = [n for n in need
                if "require_slurm" not in (ROOT / "scripts" / n).read_text()]
     assert not missing, f"compute scripts without a SLURM guard: {missing}"

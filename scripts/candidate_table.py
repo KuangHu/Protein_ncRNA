@@ -192,8 +192,16 @@ def main() -> int:
             row[f"real_blocks_ge_{tag}"] = r_n
             row[f"decoy_blocks_ge_{tag}"] = d_n
             row[f"decoy_scaled_ge_{tag}"] = round(d_n / args.replicates, 2)
-            row[f"empirical_fdr_ge_{tag}"] = (round(d_n / args.replicates / r_n, 4)
-                                              if r_n else "")
+            # A ratio against a null that produced nothing is not a rate, it is
+            # a missing measurement, and printing it as 0.0 is how a degenerate
+            # null gets mistaken for a clean result -- which is exactly what
+            # happened to Cas3. When the null for this family is absent or
+            # degenerate the cell stays empty and `null_strength` carries the
+            # reason.
+            row[f"empirical_fdr_ge_{tag}"] = (
+                round(d_n / args.replicates / r_n, 4)
+                if r_n and row["null_strength"] not in
+                ("none", "degenerate", "unknown", "") else "")
         frows.append(row)
     with open(args.out / "step4_family_null.tsv", "w") as fh:
         fh.write("\t".join(fcols) + "\n")

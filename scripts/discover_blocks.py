@@ -139,7 +139,7 @@ def _merge(iv: list[tuple[int, int]]) -> list[tuple[int, int]]:
 
 
 def trim_member(a: int, b: int, ba: int, bb: int, ma: int, mb: int,
-                strand: str) -> tuple[int, int]:
+                strand: str) -> tuple[int, int] | None:
     """Cut a member interval down to the part answering to a block.
 
     `[a, b)` is a segment on the reference axis and `[ma, mb)` is the same
@@ -153,12 +153,39 @@ def trim_member(a: int, b: int, ba: int, bb: int, ma: int, mb: int,
     silently, propagating into block_members.tsv, the block FASTAs, the padded
     exports and every triage coordinate. `tests/test_blocks.py` pins the
     mirror property rather than leaving it to inspection of BLAST output.
+
+    THE TRIM IS NOT 1:1. A BLAST HSP is gapped, so the reference span and the
+    member span are different lengths, and a trim measured on the reference
+    axis over-cuts the member axis in proportion to the indels between them.
+    Where the overlap is small and the member carries a deletion, the two
+    trims together exceed the member's own span and the coordinates *cross*:
+    `end < start`. That is not a rounding error, it is a member interval that
+    no longer denotes any sequence, and it propagated into `median_len` (one
+    block came out at -67 bp), through `length_consistency = 1 - mad/med_len`,
+    which is only bounded in [0, 1] while `med_len > 0`, and into a composite
+    score of 2.15 on a scale that ends at 1.
+
+    So the trims are scaled by the HSP's own length ratio, clamped inside the
+    member's HSP, and a member trimmed to nothing returns None -- it does not
+    overlap the block in any meaningful sense and must be dropped rather than
+    carried with crossed coordinates.
     """
+    ref_span, mem_span = b - a, mb - ma
+    if ref_span <= 0 or mem_span <= 0:
+        return None
     left_trim = max(a, ba) - a
     right_trim = b - min(b, bb)
+    scale = mem_span / ref_span
+    lt, rt = int(round(left_trim * scale)), int(round(right_trim * scale))
     if strand == "+":
-        return ma + left_trim, mb - right_trim
-    return ma + right_trim, mb - left_trim
+        fa, fb = ma + lt, mb - rt
+    else:
+        fa, fb = ma + rt, mb - lt
+    # The trimmed interval can only ever be a sub-interval of the HSP it came
+    # from; anything outside that is an artifact of the scaling.
+    fa = max(ma, min(fa, mb))
+    fb = max(ma, min(fb, mb))
+    return (fa, fb) if fb > fa else None
 
 
 def subtract(s: int, e: int, mask: list[tuple[int, int]]) -> list[tuple[int, int]]:
@@ -393,7 +420,10 @@ def call_blocks(clade: str, recs: list[dict], args) -> tuple[list[dict], dict]:
                 ov = min(b, bb) - max(a, ba)
                 if ov <= 0:
                     continue
-                fa, fb = trim_member(a, b, ba, bb, ma, mb, strand)
+                t = trim_member(a, b, ba, bb, ma, mb, strand)
+                if t is None:          # trimmed to nothing: not a member
+                    continue
+                fa, fb = t
                 if best is None or ov > best[0]:
                     best = (ov, fa, fb, strand, pid)
             if best:
