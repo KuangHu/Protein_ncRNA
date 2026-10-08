@@ -129,6 +129,43 @@ def test_trim_scales_with_the_hsp_length_ratio():
     assert trim_member(100, 200, 120, 180, 500, 600, "+") == (520, 580)
 
 
+
+
+def test_window_fasta_header_carries_the_anchor_frame():
+    """Any window writer must emit the frame where discover_blocks reads it.
+
+    `parse_header` takes `anchor_offset` and `anchor_len` from `key=value` pairs
+    in the FASTA *header*, defaulting both to 0 when absent -- and a window set
+    whose headers are bare `>id` is not rejected, it is silently reinterpreted.
+    Every coordinate stays in raw window space, so no block ever gets a negative
+    x and all of them read as "downstream"; the anchor ORF is masked as
+    zero-length, so it is never treated as coding. That is what happened to the
+    first MGE insertion run: 800 blocks, every one of them "downstream".
+
+    The jsonl carries the same fields, which is what makes the failure quiet --
+    the data is right there, in the file the reader does not consult.
+    """
+    hdr = ("ecoli.E000026 family=L1_700_1000 species=ecoli "
+           "anchor_offset=249 anchor_len=504")
+    d = _db.parse_header(hdr)
+    assert d["anchor_offset"] == 249 and d["anchor_len"] == 504
+
+    # The silent default is the hazard, so pin it explicitly.
+    bare = _db.parse_header("ecoli.E000026")
+    assert bare["anchor_offset"] == 0 and bare["anchor_len"] == 0
+
+    # And every window writer in the repo must emit both keys. Checked against
+    # the whole source rather than line by line: these headers are written from
+    # multi-line f-strings, so a per-line match would depend on where the
+    # formatter happened to break the literal.
+    for name in ("extract_windows.py", "bags_to_windows.py"):
+        src = (ROOT / "scripts" / name).read_text()
+        missing = [k for k in ("anchor_offset=", "anchor_len=") if k not in src]
+        assert not missing, (
+            f"{name} writes window FASTA headers without {missing}; "
+            "discover_blocks reads the frame from the header and defaults it "
+            "to 0, so every block would look downstream")
+
 def test_subtract_trims_rather_than_discards():
     """An HSP spanning a gene and the intergenic stretch beside it keeps the
     intergenic part. Dropping such an HSP whole is what reduced a 493-member

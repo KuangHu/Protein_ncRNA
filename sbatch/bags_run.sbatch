@@ -13,6 +13,13 @@ cd /global/home/users/kh36969/tools/Protein_ncRNA
 # only the corpus does. The published score floors are NOT applied as a filter
 # here -- inserts are ~1 kb against the 11 kb genomic windows those floors came
 # from, so they are re-derived from this corpus's own decoys at the end.
+# MAFFT, RNAalifold and R-scape live in the rnafold env. Without this the fold
+# step does not fail loudly -- fold_blocks records align_failed for every block
+# and the run completes with exit 0, which is how 171 blocks came back
+# "align_failed" and looked like a property of the data.
+__conda_root=${__conda_root:-/global/home/users/kh36969/miniconda3}
+. "$__conda_root/etc/profile.d/conda.sh"
+conda activate rnafold
 PY=/global/home/users/kh36969/.conda/envs/opfi/bin/python
 S=/global/scratch/users/kh36969/protein_ncrna
 F=/global/scratch/users/kh36969/fna_ins_discovery

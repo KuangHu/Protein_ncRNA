@@ -343,6 +343,17 @@ def main() -> int:
         return reclassify(args.reclassify)
     if not (args.fasta and args.out):
         ap.error("--fasta and --out are required unless --reclassify is given")
+    # A missing aligner is an environment fault, not a finding. Without this
+    # check every block records verdict=align_failed and the run exits 0, so a
+    # forgotten `conda activate rnafold` is indistinguishable in the output
+    # from a corpus that genuinely will not align -- which is exactly how 171
+    # MGE blocks came back "align_failed".
+    missing = [t for t in ("mafft", "RNAalifold", "R-scape") if not have(t)]
+    if missing:
+        raise SystemExit(
+            f"step 6 tools not on PATH: {', '.join(missing)}. "
+            "Activate the rnafold environment; refusing to record these as "
+            "align_failed verdicts.")
     args.out.mkdir(parents=True, exist_ok=True)
 
     for tool in ("mafft", "RNAalifold", "R-scape"):

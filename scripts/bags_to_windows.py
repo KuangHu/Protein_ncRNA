@@ -200,7 +200,14 @@ def main() -> int:
                 "window_complete": True, "seq": seq.upper(),
             }
             jl.write(json.dumps(rec) + "\n")
-            fa.write(f">{m}\n{seq.upper()}\n")
+            # discover_blocks.py parses the anchor frame out of `key=value`
+            # pairs in the FASTA header, NOT from the jsonl. A bare `>id` leaves
+            # anchor_offset and anchor_len at 0, which silently puts every
+            # coordinate back in raw window space (no negative x, so every block
+            # reads as "downstream") and masks the anchor ORF as zero-length, so
+            # it is never treated as coding.
+            fa.write(f">{m} family={rec['family']} species={rec['species']} "
+                     f"anchor_offset={s} anchor_len={e - s}\n{seq.upper()}\n")
             if dom[m] in prot:
                 faa.write(f">{m}\n{prot[dom[m]]}\n")
             kept += 1
