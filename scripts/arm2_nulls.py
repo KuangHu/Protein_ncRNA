@@ -77,6 +77,37 @@ def write_clade(out: Path, clade: str, recs: list[dict]) -> None:
                      f"anchor_len={r['anchor_len']}\n{r['seq']}\n")
 
 
+def write_shuffled_proteins(pin: Path, pout: Path, clade: str,
+                            recs: list[dict], rep: int) -> int:
+    """Carry each shuffled window's anchor protein across under its new id.
+
+    discover_blocks picks references by anchor-protein 5-mer diversity and falls
+    back, per id, to the window's first 3 kb of DNA when the protein is missing.
+    The shuffle decoys rename every anchor to `<id>__sh<rep>`, so without this
+    they would miss that lookup entirely and pick references in DNA space while
+    the real arm picks in protein space. That is a second difference on top of
+    the one the pilot is trying to measure, and it lands hardest on the arm that
+    is supposed to be the cleanest: same windows, same proteins, only the anchor
+    frame moved.
+    """
+    src = pin / f"{clade}.faa"
+    if not src.exists():
+        print(f"  no {src}; shuffled decoys will fall back to DNA references",
+              file=sys.stderr)
+        return 0
+    seqs = {h.split()[0]: s for h, s in read_fasta(str(src))}
+    pout.mkdir(parents=True, exist_ok=True)
+    n = 0
+    with open(pout / f"DECOY_within_bag_shuffle__rep{rep}__{clade}.faa", "w") as fh:
+        for r in recs:
+            base = r["anchor_id"].rsplit("__sh", 1)[0]
+            s = seqs.get(base)
+            if s:
+                fh.write(f">{r['anchor_id']}\n{s}\n")
+                n += 1
+    return n
+
+
 def shuffle_anchor(recs: list[dict], rng: random.Random, rep: int,
                    min_sep: int) -> list[dict]:
     """Same sequences, anchor frame moved and orientation randomised."""
@@ -95,12 +126,19 @@ def shuffle_anchor(recs: list[dict], rng: random.Random, rep: int,
             continue
         a, b = rng.choice(spans)
         off = rng.randint(a, b)
+        # Both offsets must be flipped together. Reporting the pseudo-anchor in
+        # the reverse-complemented frame and the real one in the original frame
+        # would silently corrupt `|pseudo - real|` for half the records, which
+        # is the one audit this field exists to support.
+        real_out = real
         if rng.random() < 0.5:
             seq = revcomp(seq)
             off = len(seq) - off - alen
+            real_out = len(seq) - real - alen
         out.append({**r, "anchor_id": f"{r['anchor_id']}__sh{rep}",
                     "seq": seq, "anchor_offset": off, "anchor_len": alen,
-                    "pseudo_anchor": True, "real_anchor_offset": real})
+                    "pseudo_anchor": True, "real_anchor_offset": real_out,
+                    "real_anchor_offset_input_frame": real})
     return out
 
 
@@ -181,6 +219,13 @@ def main() -> int:
     ap.add_argument("--replicates", type=int, default=3)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--min-anchor-sep", type=int, default=MIN_ANCHOR_SEP)
+    ap.add_argument("--proteins-in", type=Path,
+                    help="anchor-protein dir for the real clade "
+                         "(default <windows>/proteins); within_bag_shuffle "
+                         "re-emits these under the shuffled anchor ids")
+    ap.add_argument("--proteins-out", type=Path,
+                    help="where to write the shuffled anchor proteins "
+                         "(default <out>/proteins)")
     args = ap.parse_args()
     require_slurm("arm2 null generation")
 
@@ -204,6 +249,9 @@ def main() -> int:
     else:
         reps = genomic_background(recs, genomes, rng, args.replicates)
 
+    pin = args.proteins_in or (args.windows / "proteins")
+    pout = args.proteins_out or (args.out / "proteins")
+
     made = []
     for rep, d in enumerate(reps):
         name = f"DECOY_{args.mode}__rep{rep}__{clade}"
@@ -211,9 +259,14 @@ def main() -> int:
             print(f"  {name}: only {len(d)} windows, skipped", file=sys.stderr)
             continue
         write_clade(args.out, name, d)
+        np = (write_shuffled_proteins(pin, pout, clade, d, rep)
+              if args.mode == "within_bag_shuffle" else 0)
         made.append({"clade": name, "n_windows": len(d),
+                     "n_anchor_proteins": np,
                      "retained_frac": round(len(d) / len(recs), 4)})
-        print(f"  {name}: {len(d)} windows ({len(d)/len(recs):.1%} of real)")
+        print(f"  {name}: {len(d)} windows ({len(d)/len(recs):.1%} of real)"
+              + (f", {np} anchor proteins" if args.mode == "within_bag_shuffle"
+                 else ""))
 
     # A decoy set far smaller than the real one is not a matched null: block
     # recurrence is a fraction of members, so a short decoy clade clears the
@@ -224,6 +277,15 @@ def main() -> int:
         "min_anchor_sep": args.min_anchor_sep if
         args.mode == "within_bag_shuffle" else None,
         "decoys": made,
+        # Which space discover_blocks will pick this arm's references in. The
+        # genomic background has no anchor protein by construction, so it is an
+        # explicit, declared fallback rather than an accident -- and one more
+        # reason its separation reads as a bound, not a match.
+        "reference_space": ("sequence_fallback"
+                            if args.mode == "genomic_background"
+                            else "protein" if made and
+                            all(m["n_anchor_proteins"] for m in made)
+                            else "sequence_fallback"),
         "null_strength": ("matched" if made and
                           min(m["retained_frac"] for m in made) >= 0.9
                           else "short" if made else "none"),

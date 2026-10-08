@@ -233,3 +233,51 @@ if __name__ == "__main__":
                 traceback.print_exc()
     print("FAILED" if fails else "all block coordinate tests passed")
     raise SystemExit(1 if fails else 0)
+
+
+def test_reference_choice_depends_on_the_anchor_protein_being_found():
+    """The protein lookup must actually change which references are picked.
+
+    pick_references measures diversity on anchor proteins and falls back, PER
+    ID, to the window's first 3 kb of DNA when the protein is missing. That
+    fallback is a degraded comparison, not an equivalent one, so an arm whose
+    ids miss the lookup picks references in a different space from the real arm.
+    In the Arm 2 pilot that would have applied to three of the four arms -- the
+    shuffle decoys rename every anchor `<id>__sh<rep>`, the background decoys
+    invent `BG<rep>_<genome>_<i>`, and the permutation decoys carry sibling-bag
+    ids -- layering a reference-seeding difference on top of the null difference
+    the pilot exists to measure.
+
+    Note this is a property of the LOOKUP, not an invariant across renaming:
+    anchor ids also feed the picker's tie-breaks and its group sampling, so two
+    clades with identical proteins under different ids may legitimately differ.
+    """
+    import random as _r
+
+    rr = _r.Random(7)
+    aa = "ACDEFGHIKLMNPQRSTVWY"
+    # Graded, non-degenerate distances. Sequences like "M" + one residue
+    # repeated share no 5-mers at all, so every pair ties at Jaccard 0 and the
+    # picker falls through to its id hash -- which would make this test measure
+    # the hash rather than the protein space.
+    ids = [f"a{i}__sh0" for i in range(8)]
+    prot = {i: "".join(rr.choice(aa) for _ in range(200)) for i in ids}
+    # Identical DNA, so the fallback carries no signal at all and the two
+    # spaces cannot coincide by construction.
+    recs = [{"anchor_id": i, "seq": "ACGT" * 1000, "win_len": 4000} for i in ids]
+
+    saved = dict(_db._PROT)
+    try:
+        _db._PROT.clear()
+        _db._PROT.update(prot)
+        with_prot = {r["anchor_id"] for r in _db.pick_references(recs, 3)}
+        assert with_prot <= set(ids)
+
+        _db._PROT.clear()
+        without = {r["anchor_id"] for r in _db.pick_references(recs, 3)}
+        assert with_prot != without, (
+            "the DNA fallback reproduced the protein-based picks, so this "
+            "fixture no longer distinguishes the two spaces")
+    finally:
+        _db._PROT.clear()
+        _db._PROT.update(saved)

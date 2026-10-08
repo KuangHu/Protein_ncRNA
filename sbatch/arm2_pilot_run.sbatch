@@ -34,20 +34,37 @@ P=$E/pilot
 REAL=$P/real
 DEC=$P/decoys
 BLK=$P/blocks
+# ONE protein space for every arm. discover_blocks picks references by anchor
+# protein 5-mer diversity and falls back, per id, to the window's first 3 kb of
+# DNA when the protein is missing. Pointing it at the six focus bags only would
+# leave the real arm picking references in protein space and all three decoy
+# arms picking in DNA space -- a second difference layered on top of the one
+# this pilot exists to measure, hitting hardest the arm meant to be cleanest.
+PROT=$P/proteins
 NT=${SLURM_CPUS_PER_TASK}
 REPS=${REPS:-3}
 export TMPDIR=/tmp/pna2_${SLURM_JOB_ID}; mkdir -p "$TMPDIR"
 trap 'rm -rf "$TMPDIR"' EXIT
-mkdir -p "$REAL/proteins" "$DEC"
+mkdir -p "$REAL" "$DEC" "$PROT"
 
 echo "=== assemble the six focus bags as the real set"
 while read -r BAG; do
   [ -n "$BAG" ] || continue
   cp "$E/pilot_windows/$BAG/$BAG.fasta" "$REAL/"
   cp "$E/pilot_windows/$BAG/$BAG.jsonl" "$REAL/"
-  cp "$E/pilot_windows/$BAG/proteins/$BAG.faa" "$REAL/proteins/" 2>/dev/null || true
   echo "  $BAG: $(grep -c '^>' "$REAL/$BAG.fasta") windows"
 done < "$E/pilot_focus.txt"
+
+echo "=== stage anchor proteins for all 18 extracted bags"
+# All 18, not the 6: the same_family_permutation decoys carry anchor ids from
+# the sibling bags, and those ids resolve to a protein only if the siblings are
+# staged here too.
+for D in "$E"/pilot_windows/*/; do
+  B=$(basename "$D")
+  [ -f "$D/proteins/$B.faa" ] && cp "$D/proteins/$B.faa" "$PROT/" || \
+    echo "  (no proteins for $B)"
+done
+echo "  staged $(ls "$PROT" | wc -l) anchor-protein FASTAs"
 
 echo "=== null 1/3: genomic_background"
 while read -r BAG; do
@@ -61,7 +78,8 @@ echo "=== null 2/3: within_bag_shuffle"
 while read -r BAG; do
   [ -n "$BAG" ] || continue
   $PY -u scripts/arm2_nulls.py --windows "$E/pilot_windows/$BAG" \
-      --mode within_bag_shuffle --out "$DEC" --replicates "$REPS" --seed 1
+      --mode within_bag_shuffle --out "$DEC" --replicates "$REPS" --seed 1 \
+      --proteins-in "$E/pilot_windows/$BAG/proteins" --proteins-out "$PROT"
 done < "$E/pilot_focus.txt"
 
 echo "=== null 3/3: same_family_permutation (family_size >= 4 only)"
@@ -92,10 +110,11 @@ PYEOF
 
 echo "=== step 4, identical settings on real + all decoys"
 $PY -u scripts/discover_blocks.py --windows "$REAL" --decoys "$DEC" \
-    --proteins "$REAL/proteins" --out "$BLK" --references 3 \
+    --proteins "$PROT" --out "$BLK" --references 3 \
     --min-recurrence 0.5 --workers 8 --threads 4 --tmp "$TMPDIR"
 
 echo "=== per-null-type comparison"
 $PY -u scripts/arm2_null_report.py --blocks "$BLK" --decoys "$DEC" \
-    --focus "$E/pilot_focus.txt" --out "$P/null_comparison"
+    --proteins "$PROT" --focus "$E/pilot_focus.txt" \
+    --out "$P/null_comparison"
 echo "=== outputs: $P"

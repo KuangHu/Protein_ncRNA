@@ -81,3 +81,75 @@ if __name__ == "__main__":
                 traceback.print_exc()
     print("FAILED" if fails else "all null tests passed")
     raise SystemExit(1 if fails else 0)
+
+
+def _arm2():
+    spec = importlib.util.spec_from_file_location(
+        "_a2", ROOT / "scripts" / "arm2_nulls.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def test_shuffled_pseudo_anchor_clears_the_real_one_in_one_frame():
+    """Both offsets must be reported in the frame the sequence ends up in.
+
+    shuffle_anchor randomises orientation. Flipping the pseudo-anchor's offset
+    while leaving `real_anchor_offset` in the pre-flip frame leaves half the
+    records describing two different coordinate systems, so `|pseudo - real|`
+    silently stops meaning separation -- which is the one property the >=2 kb
+    rule exists to guarantee.
+    """
+    import random
+
+    a2 = _arm2()
+    alen, wlen, sep = 600, 11000, 2000
+    recs = [{"anchor_id": f"a{i}", "seq": "ACGT" * (wlen // 4),
+             "anchor_offset": 5000, "anchor_len": alen, "family": "F",
+             "species": ""} for i in range(40)]
+    out = a2.shuffle_anchor(recs, random.Random(0), 0, sep)
+    assert out, "no shuffled decoys produced"
+    flipped = 0
+    for r in out:
+        p, q = r["anchor_offset"], r["real_anchor_offset"]
+        assert 0 <= p <= len(r["seq"]) - alen
+        assert 0 <= q <= len(r["seq"]) - alen
+        # Separation holds between the two ends, not just the two starts.
+        assert p + alen + sep <= q or q + alen + sep <= p, (p, q)
+        if q != r["real_anchor_offset_input_frame"]:
+            flipped += 1
+    assert flipped, "orientation was never randomised in 40 draws"
+
+
+def test_shuffled_decoys_carry_their_anchor_proteins(tmp_path):
+    """Every shuffled anchor id must resolve to a protein under its new name.
+
+    shuffle_anchor renames each anchor `<id>__sh<rep>`. discover_blocks looks up
+    anchor proteins by exact id and silently falls back to window DNA when the
+    lookup misses, so without re-emitting the proteins under the shuffled ids
+    this arm would pick references in a different space from the real arm --
+    and it is the arm that is supposed to differ from real in exactly one way,
+    the anchor frame.
+    """
+    import random
+
+    a2 = _arm2()
+    alen, wlen = 600, 11000
+    recs = [{"anchor_id": f"a{i}", "seq": "ACGT" * (wlen // 4),
+             "anchor_offset": 5000, "anchor_len": alen, "family": "F",
+             "species": ""} for i in range(12)]
+    pin, pout = tmp_path / "in", tmp_path / "out"
+    pin.mkdir()
+    with open(pin / "BAG.faa", "w") as fh:
+        for i in range(12):
+            fh.write(f">a{i}\nM{'ACDEFGHIKL'[i % 10] * 60}\n")
+
+    d = a2.shuffle_anchor(recs, random.Random(3), 0, 2000)
+    n = a2.write_shuffled_proteins(pin, pout, "BAG", d, 0)
+    assert n == len(d), f"{n} proteins for {len(d)} shuffled windows"
+
+    emitted = {line[1:].split()[0]
+               for line in open(pout / "DECOY_within_bag_shuffle__rep0__BAG.faa")
+               if line.startswith(">")}
+    assert emitted == {r["anchor_id"] for r in d}
+    assert all(i.endswith("__sh0") for i in emitted)

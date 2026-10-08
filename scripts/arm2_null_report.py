@@ -60,10 +60,24 @@ def main() -> int:
     ap.add_argument("--decoys", required=True, type=Path)
     ap.add_argument("--focus", required=True, type=Path)
     ap.add_argument("--out", required=True, type=Path)
+    ap.add_argument("--proteins", type=Path,
+                    help="the anchor-protein dir step 4 was given; used to "
+                         "report which space each arm picked references in")
     ap.add_argument("--floor", type=float, default=0.80)
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     bags = set(args.focus.read_text().split())
+
+    # discover_blocks picks references on anchor-protein 5-mer diversity and
+    # falls back per id to the window's first 3 kb of DNA. An arm whose ids miss
+    # that lookup is not comparable to one whose ids hit it, so which space each
+    # arm actually used is reported rather than assumed.
+    have_prot: set[str] = set()
+    if args.proteins and args.proteins.is_dir():
+        for fp in args.proteins.glob("*.faa"):
+            for line in open(fp):
+                if line.startswith(">"):
+                    have_prot.add(line[1:].split()[0])
 
     blocks = read_tsv(args.blocks / "blocks.tsv")
     S = lambda b: float(b["composite_score"])
@@ -73,11 +87,19 @@ def main() -> int:
     # clades all came back empty looks identical to a perfect separation if only
     # the blocks are counted.
     built: dict[tuple[str, str], set[str]] = defaultdict(set)
+    prot_hit: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0])
     for p in sorted(args.decoys.glob("DECOY_*.fasta")):
         m = mode_of(p.stem)
         b = bag_of(p.stem, bags)
-        if m and b:
-            built[(b, m)].add(p.stem)
+        if not (m and b):
+            continue
+        built[(b, m)].add(p.stem)
+        if have_prot:
+            for line in open(p):
+                if line.startswith(">"):
+                    aid = line[1:].split()[0]
+                    prot_hit[(b, m)][0] += aid in have_prot
+                    prot_hit[(b, m)][1] += 1
 
     real_scores: dict[str, list[float]] = defaultdict(list)
     decoy_scores: dict[tuple[str, str], list[float]] = defaultdict(list)
@@ -98,12 +120,14 @@ def main() -> int:
             "n_decoy_blocks", "decoy_max_score", "decoy_p90_score",
             "decoy_blocks_ge_floor", "n_real_blocks", "real_max_score",
             "real_blocks_ge_floor", "separation_real_max_minus_decoy_max",
-            "empirical_fdr_ge_floor", "null_strength"]
+            "empirical_fdr_ge_floor", "reference_space",
+            "decoy_anchors_with_protein_frac", "null_strength"]
     rows = []
     for b in sorted(bags):
         rs = real_scores.get(b, [])
         for m in MODES:
             nb = len(built[(b, m)])
+            hit = prot_hit.get((b, m))
             ds = decoy_scores[(b, m)]
             wb = len(decoy_with_block[(b, m)])
             r_ge = sum(1 for s in rs if s >= args.floor)
@@ -133,6 +157,12 @@ def main() -> int:
                 "empirical_fdr_ge_floor":
                     round(d_ge / len(built[(b, m)]) / max(r_ge, 1), 4)
                     if r_ge and strength in ("resolving", "sparse") else "",
+                "reference_space": (
+                    "" if not have_prot or nb == 0 else
+                    "protein" if hit and hit[0] >= 0.99 * hit[1] else
+                    "sequence_fallback" if hit and hit[0] == 0 else "mixed"),
+                "decoy_anchors_with_protein_frac":
+                    round(hit[0] / hit[1], 4) if hit and hit[1] else "",
                 "null_strength": strength,
             })
 
@@ -146,7 +176,8 @@ def main() -> int:
 
     w = ["bag", "null_type", "n_decoy_clades", "decoy_clades_with_a_block",
          "decoy_max_score", "real_max_score",
-         "separation_real_max_minus_decoy_max", "null_strength"]
+         "separation_real_max_minus_decoy_max", "reference_space",
+         "null_strength"]
     print("  ".join(c for c in w))
     for r in rows:
         print("  ".join(str(r[c]).ljust(len(c)) for c in w))
