@@ -34,6 +34,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from protein_ncrna.compute import require_slurm
+from protein_ncrna.diversity import hash_sample
 from protein_ncrna.seqio import read_fasta
 from protein_ncrna.tools import which
 
@@ -99,15 +100,50 @@ def run_mmseqs_cluster(faa: Path, ident: float, tmp: Path, threads: int) -> dict
 
 
 def approx_median_identity(faa: Path, members: list[str], seqs: dict[str, str],
-                           tmp: Path, threads: int, cap: int = 300) -> float | None:
+                           tmp: Path, threads: int, cap: int = 300,
+                           seed: int = 1) -> float | None:
     """Median pairwise AA identity within a clade, from an all-vs-all search.
 
     Capped: identity is a property of the clade, and a few hundred sequences
     estimate it as well as thousands at a fraction of the cost.
+
+    The sample is a seeded hash of the member ids, not the first `cap` in MMseqs
+    output order. MMseqs emits members grouped by representative and ordered by
+    the input FASTA, which tracks accession and submission batch, so the head of
+    the list is not a neutral slice of the clade.
+
+    It is deliberately *not* a diversity-spread sample, unlike the window cap.
+    This number gates clade selection as an estimate of how similar the clade's
+    members typically are; a farthest-point subset is enriched for outliers by
+    construction and would bias the median down, increasingly so for the large
+    clades where the cap actually binds. Spread the sample when the subset must
+    represent the clade's breadth, and hash it when the subset must stand in for
+    the clade's typical member.
+
+    The sample is drawn from the clade's *distinct* sequences. Without that it
+    is not an estimate of anything: these clades are mostly duplicates -- one
+    GroupII_RT clade has 799 members and 29 distinct proteins, a ratio of 0.036
+    -- so a sample of raw members is overwhelmingly duplicate-vs-duplicate pairs
+    and the median converges on 1.0 regardless of how diverged the clade really
+    is. That is what it did: the same clade measured 0.451 from an ordered
+    sample and 1.000 from a random one, and the 1.000 pushed it past the
+    `identity > 0.9` gate, dropping GroupII_RT from the 0.35 rung to the 0.70
+    rung and 3,415 alignable windows to 217. Neither number was a measurement.
     """
     if len(members) < 2:
         return None
-    sample = members[:cap]
+    # Deduplicate on sequence, keeping the first id for each, so the estimate
+    # measures divergence rather than copy number.
+    first: dict[str, str] = {}
+    for m in sorted(members):
+        if m in seqs:
+            first.setdefault(seqs[m], m)
+    uniq = sorted(first.values())
+    if len(uniq) < 2:
+        # A clade of one distinct sequence is perfectly conserved, and saying so
+        # is more useful than returning None and skipping the gate.
+        return 1.0
+    sample = hash_sample(uniq, cap, seed)
     tmp.mkdir(parents=True, exist_ok=True)
     q = tmp / "clade.faa"
     with open(q, "w") as fh:

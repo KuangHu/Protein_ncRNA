@@ -53,6 +53,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from protein_ncrna.compute import require_slurm
+from protein_ncrna.diversity import jaccard as _jaccard, kmers as _kmers, \
+    nearest_representatives
 from protein_ncrna.seqio import read_fasta
 from protein_ncrna.tools import which
 
@@ -197,18 +199,7 @@ def coding_frac(mask: list[tuple[int, int]], s: int, e: int) -> float:
 _PROT: dict[str, str] = {}
 
 
-def _kmers(s: str, k: int = 5) -> set[str]:
-    return {s[i:i + k] for i in range(len(s) - k + 1)} if len(s) >= k else {s}
-
-
-def _jaccard(a: set[str], b: set[str]) -> float:
-    if not a or not b:
-        return 0.0
-    inter = len(a & b)
-    return inter / (len(a) + len(b) - inter)
-
-
-def pick_references(recs: list[dict], k: int) -> list[dict]:
+def pick_references(recs: list[dict], k: int, seed: int = 1) -> list[dict]:
     """Up to k references spread across the clade's own protein diversity.
 
     A single reference, or three near-identical ones, leaves the diverged half
@@ -224,43 +215,23 @@ def pick_references(recs: list[dict], k: int) -> list[dict]:
     similarity to its own group. Taking the farthest-point seeds themselves
     would make references out of the clade's oddest members, which is the
     opposite of what a reference should be.
+
+    Every tie is broken by a seeded hash of the anchor id rather than by list
+    position, so the reference set is a property of the clade and not of the
+    order its windows happened to be read in.
     """
     full = max((r["win_len"] for r in recs), default=0)
-
-    def complete(r: dict) -> bool:
-        return r["win_len"] >= full
-
-    if len(recs) <= k:
-        return sorted(recs, key=lambda r: -r["win_len"])
-
-    prof = {r["anchor_id"]: _kmers(_PROT.get(r["anchor_id"], r["seq"][:3000]))
-            for r in recs}
     by_id = {r["anchor_id"]: r for r in recs}
-    ids = [r["anchor_id"] for r in recs]
+    ids = sorted(by_id)
+    if len(recs) <= k:
+        return sorted(recs, key=lambda r: (-r["win_len"], r["anchor_id"]))
 
-    # Farthest-point seeds, starting from the longest complete window.
-    seeds = [max(ids, key=lambda i: (complete(by_id[i]), by_id[i]["win_len"]))]
-    mind = {i: 1.0 - _jaccard(prof[i], prof[seeds[0]]) for i in ids}
-    while len(seeds) < k and len(seeds) < len(ids):
-        nxt = max((i for i in ids if i not in seeds), key=lambda i: mind[i])
-        if mind[nxt] <= 0.0:
-            break
-        seeds.append(nxt)
-        for i in ids:
-            mind[i] = min(mind[i], 1.0 - _jaccard(prof[i], prof[nxt]))
-
-    groups: dict[str, list[str]] = defaultdict(list)
-    for i in ids:
-        groups[max(seeds, key=lambda s: _jaccard(prof[i], prof[s]))].append(i)
-
-    refs = []
-    for s, mem in groups.items():
-        sample = mem[:40]  # mean similarity is only a tie-break; cap the cost
-        best = max(mem, key=lambda i: (
-            complete(by_id[i]), by_id[i]["win_len"],
-            sum(_jaccard(prof[i], prof[j]) for j in sample)))
-        refs.append(by_id[best])
-    return refs[:k]
+    # Fall back to the window's own 5' sequence only when the anchor protein is
+    # missing; that is a degraded comparison, not an equivalent one.
+    seqs = {i: _PROT.get(i, by_id[i]["seq"][:3000]) for i in ids}
+    prefer = {i: (by_id[i]["win_len"] >= full, by_id[i]["win_len"]) for i in ids}
+    chosen = nearest_representatives(ids, seqs, k, prefer=prefer, seed=seed)
+    return [by_id[i] for i in chosen]
 
 
 def blast_clade(recs: list[dict], refs: list[dict], tmp: Path,

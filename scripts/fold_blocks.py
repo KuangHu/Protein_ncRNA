@@ -151,7 +151,13 @@ def run_rscape(sto: Path, outdir: Path, evalue: float) -> dict:
     if not exe:
         return {"status": "rscape_missing"}
     d = outdir / "rscape"
-    d.mkdir(exist_ok=True)
+    # Start from an empty directory. The power file is found by glob, so a
+    # stale one left by an earlier run of the same block would be read as this
+    # run's power analysis -- and power is what separates `underpowered` from
+    # `tested_no_covariation`, so a stale read changes the verdict silently.
+    if d.exists():
+        shutil.rmtree(d)
+    d.mkdir(parents=True)
     proc = subprocess.run([exe, "-s", "--outdir", str(d), "-E", str(evalue), str(sto)],
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     txt = proc.stdout.decode(errors="replace") + proc.stderr.decode(errors="replace")
@@ -180,7 +186,13 @@ def run_rscape(sto: Path, outdir: Path, evalue: float) -> dict:
                    bpairs_tested=int(m.group(3)),
                    found_pairs=int(m.group(4)),
                    sensitivity=float(m.group(5)), ppv=float(m.group(6)))
-    for pf in sorted(d.glob("*.power")):
+    powers = sorted(d.glob("*.power"))
+    if len(powers) > 1:
+        # The directory is wiped before each run, so this means R-scape itself
+        # emitted several. Refuse to pick one at random.
+        out["parse_warning"] = (f"{len(powers)} .power files: "
+                                f"{[p.name for p in powers]}")
+    for pf in powers[:1]:
         ptxt = pf.read_text()
         m = re.search(r"# avg substitutions per BP\s+([\d.]+)", ptxt)
         if m:
@@ -191,7 +203,7 @@ def run_rscape(sto: Path, outdir: Path, evalue: float) -> dict:
         m = re.search(r"# BPAIRS observed to covary\s+(\d+)", ptxt)
         if m:
             out["observed_covarying"] = int(m.group(1))
-        break
+
     out.setdefault("covarying_pairs", out.get("observed_covarying"))
     # The power file reports the same quantity independently; disagreement means
     # the report was misparsed, so surface it rather than trusting one side.

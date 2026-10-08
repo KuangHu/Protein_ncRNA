@@ -53,6 +53,9 @@ def main() -> int:
                     / "configs" / "blind" / "step4.json")
     ap.add_argument("--benchmark", type=Path,
                     help="benchmark dir; adds benchmark_* annotation columns only")
+    ap.add_argument("--decoys", type=Path,
+                    help="decoy window dir; reads decoy_manifest.json to label "
+                         "each family's null strength")
     ap.add_argument("--allow-incomplete", action="store_true",
                     help="build the table from a step-4 run that lost clades; "
                          "the decoy denominator will be short and the empirical "
@@ -160,14 +163,29 @@ def main() -> int:
 
     # Per-family decoy counts at both floors -- the null these rows are read
     # against, carried alongside them so the table is never quoted bare.
+    # A family whose decoys could not be drawn from enough distinct source
+    # clades has a null that retains relatedness. That biases its FDR *upward*,
+    # so the column is an upper bound rather than a measurement, and it must be
+    # labelled instead of quoted bare.
+    null_strength: dict[str, str] = {}
+    dm = args.decoys / "decoy_manifest.json" if args.decoys else None
+    if dm and dm.exists():
+        d = json.loads(dm.read_text())
+        null_strength = {f: v.get("null_strength", "")
+                         for f, v in d.get("per_family", {}).items()}
+        if not null_strength and d.get("decoys"):
+            print(f"note: {dm} predates null-strength diagnostics", file=sys.stderr)
+
     fams = sorted({b["family"] for b in real})
     fcols = ["family", "real_blocks_ge_080", "decoy_blocks_ge_080",
              "decoy_scaled_ge_080", "empirical_fdr_ge_080",
              "real_blocks_ge_090", "decoy_blocks_ge_090",
-             "decoy_scaled_ge_090", "empirical_fdr_ge_090", "benchmark_only"]
+             "decoy_scaled_ge_090", "empirical_fdr_ge_090", "null_strength",
+             "benchmark_only"]
     frows = []
     for fam in fams:
-        row = {"family": fam, "benchmark_only": fam in bench_only}
+        row = {"family": fam, "benchmark_only": fam in bench_only,
+               "null_strength": null_strength.get(fam, "unknown")}
         for tag, c in (("080", floor), ("090", hi)):
             r_n = sum(1 for b in real if b["family"] == fam and S(b) >= c)
             d_n = sum(1 for b in decoy if b["family"] == fam and S(b) >= c)
@@ -192,12 +210,14 @@ def main() -> int:
         "discovery_candidates": sum(1 for r in rows if not r["benchmark_only"]),
         "per_family": frows,
         "benchmark_annotated": bool(args.benchmark),
+        "families_with_degenerate_null": sorted(
+            f for f, v in null_strength.items() if v == "degenerate"),
     }
     (args.out / "step4_candidates.json").write_text(json.dumps(summary, indent=2))
 
     w = ["family", "real_blocks_ge_080", "decoy_scaled_ge_080",
          "empirical_fdr_ge_080", "real_blocks_ge_090", "decoy_scaled_ge_090",
-         "benchmark_only"]
+         "null_strength", "benchmark_only"]
     print("  ".join(c for c in w))
     for r in frows:
         print("  ".join(str(r[c]).ljust(len(c)) for c in w))

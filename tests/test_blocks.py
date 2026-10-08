@@ -102,6 +102,26 @@ def test_partial_step4_run_is_refused_downstream():
         "candidate_table.py must refuse an incomplete step-4 run"
 
 
+def test_identity_estimate_deduplicates_before_sampling():
+    """Median pairwise identity must measure divergence, not copy number.
+
+    These clades are mostly duplicates -- one GroupII_RT clade has 799 members
+    and 29 distinct proteins. Sampling raw members therefore draws almost only
+    duplicate-vs-duplicate pairs and the median goes to 1.0 whatever the clade
+    actually looks like. The same clade measured 0.451 from an ordered sample
+    and 1.000 from a random one; the second crossed the `identity > 0.9`
+    rejection gate and cost GroupII_RT 3,415 alignable windows.
+    """
+    src = (ROOT / "scripts" / "clade_decompose.py").read_text()
+    i = src.index("def approx_median_identity")
+    body = src[i:i + 3000]
+    assert "first.setdefault(seqs[m], m)" in body, \
+        "the identity sample must be drawn from distinct sequences"
+    assert "hash_sample(uniq" in body, \
+        "sample the deduplicated set, not the raw member list"
+    assert "members[:cap]" not in body, "no order-dependent slice"
+
+
 if __name__ == "__main__":
     import traceback
     fails = 0

@@ -1,3 +1,33 @@
+> # ⚠ DEPRECATED — raw-anchor identity metric
+>
+> **Every number in this file is invalidated and is retained as a development
+> log, not as a result.**
+>
+> Step 3 estimated each clade's median pairwise identity over *raw anchors*.
+> These clades are mostly duplicates — one GroupII_RT clade has 799 members and
+> 29 distinct proteins — so that statistic measured copy number, not divergence,
+> and converged on 1.0 for duplicate-heavy clades regardless of how diverged
+> they were. The same clade measured **0.451** from an ordered sample and
+> **1.000** from a random one. Median identity gates clade selection, so a
+> broken estimate decided which clades the entire pipeline ran on.
+>
+> | superseded output | status |
+> |---|---|
+> | 43 selected clades | invalidated — corrected run selects 75 |
+> | 24 non-Cas3 candidates | invalidated — derived from the wrong clade set |
+> | the GroupII_RT block with 19 covarying pairs | **not trusted until rediscovered** |
+> | the decoy FDR table | invalidated — real clade set changed |
+> | Cas3 `benchmark_only` at FDR 0.556 | invalidated — its null was degenerate or absent |
+>
+> Also fixed since: a minus-strand member-trim sign error, a uniform decoy draw
+> that left decoys up to 71% drawn from a single real clade, an encounter-order
+> window cap, and a step-4 worker failure path that exited 0.
+>
+> The corrected chain is dedup-sequence identity + quota decoys + stratified
+> cap. Its results will replace this file. Do not cite anything below.
+
+---
+
 # Blind protein-anchored ncRNA discovery — results to date
 
 Generated 2026-10-07 from the post-strand-fix run (`blocks_strandfix_26738251`,

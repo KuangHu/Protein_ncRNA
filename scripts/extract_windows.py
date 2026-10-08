@@ -30,6 +30,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from protein_ncrna.compute import require_slurm
+from protein_ncrna.diversity import (farthest_point, hash_sample,
+                                     stratified_sample)
 from protein_ncrna.seqio import read_fasta, revcomp
 
 _G: dict = {}
@@ -65,6 +67,99 @@ def _one(task):
         return acc, [], f"{type(e).__name__}: {e}"
 
 
+def load_family_proteins(census: Path, families: set[str]) -> dict[str, str]:
+    """Anchor protein sequences, keyed by anchor id, for the given families."""
+    seqs: dict[str, str] = {}
+    for fam in sorted(families):
+        faa = census / "proteins" / f"{fam}.faa"
+        if not faa.exists():
+            print(f"  no {faa}; cap falls back to a hash sample for {fam}",
+                  file=sys.stderr)
+            continue
+        for h, s in read_fasta(str(faa)):
+            seqs.setdefault(h.split()[0], s)
+    return seqs
+
+
+def select_capped(by_genome: dict, args) -> list[tuple]:
+    """Apply --max-per-clade per clade and prune `by_genome` in place.
+
+    Returns the manifest rows (clade_id, anchor_id, selected, reason) for every
+    candidate anchor, kept or dropped, so the cap is auditable rather than
+    implicit in which windows happen to exist.
+
+    One anchor can belong to several clades (the thresholds are nested), so an
+    anchor is written if *any* of its clades selected it; `reason` records the
+    clade that this row is about.
+    """
+    per_clade: dict[str, list[str]] = defaultdict(list)
+    win: dict[str, dict] = {}
+    fams: set[str] = set()
+    for ws in by_genome.values():
+        for w in ws:
+            win[w["anchor_id"]] = w
+            fams.add(w["family"])
+            for g in w["groups"]:
+                per_clade[g].append(w["anchor_id"])
+
+    seqs = (load_family_proteins(args.census, fams)
+            if args.cap_mode in ("stratified", "diverse") else {})
+    if args.cap_mode in ("stratified", "diverse") and not seqs:
+        # Without proteins both modes silently degrade to a hash sample, which
+        # is order-independent but not diversity-aware -- exactly the thing the
+        # cap exists to provide. Say so rather than letting the manifest's
+        # reason column be the only trace.
+        print(f"WARNING: no anchor proteins under {args.census / 'proteins'}; "
+              f"--cap-mode {args.cap_mode} degrades to a hash sample",
+              file=sys.stderr)
+    # Prefer complete windows, then longer ones: a truncated window cannot
+    # support a block comparison, so it should lose a tie even if it is the
+    # more diverse choice.
+    prefer = {a: (bool(w["window_complete"]), w["win_end"] - w["win_start"])
+              for a, w in win.items()}
+
+    rows, keep_ids = [], set()
+    for clade in sorted(per_clade):
+        ids = sorted(set(per_clade[clade]))
+        if len(ids) <= args.max_per_clade:
+            sel, why = set(ids), "under_cap"
+        elif args.cap_mode == "first":
+            sel, why = set(ids[:args.max_per_clade]), "input_order"
+        elif args.cap_mode == "hash":
+            sel = set(hash_sample(ids, args.max_per_clade, args.seed))
+            why = "hash_sample"
+        else:
+            have = sum(1 for i in ids if i in seqs)
+            if have < len(ids) * 0.5:
+                sel = set(hash_sample(ids, args.max_per_clade, args.seed))
+                why = f"hash_sample_fallback_{have}_of_{len(ids)}_proteins"
+            elif args.cap_mode == "diverse":
+                sel = set(farthest_point(ids, seqs, args.max_per_clade,
+                                         seed=args.seed, prefer=prefer))
+                why = "diverse_kmer"
+            else:
+                # Stratified, not farthest-point. Taking the 500 mutually most
+                # dissimilar members of a 7,877-member clade does not sample its
+                # breadth -- it selects its 500 outliers, which is measurably
+                # worse than the arbitrary slice it replaced: on this corpus it
+                # cut GroupII_RT from 4 real blocks to 2 while decoys rose to 13.
+                # Seeding farthest-point and then keeping each seed's *nearest*
+                # representative covers the same breadth with typical members.
+                sel = set(stratified_sample(ids, seqs, args.max_per_clade,
+                                            seed=args.seed, prefer=prefer))
+                why = "stratified_kmer"
+        keep_ids |= sel
+        for i in ids:
+            rows.append((clade, i, str(i in sel), why))
+        if len(ids) > args.max_per_clade:
+            print(f"  cap {clade[:58]}: {len(ids)} -> {len(sel)} ({why})",
+                  flush=True)
+
+    for acc in list(by_genome):
+        by_genome[acc] = [w for w in by_genome[acc] if w["anchor_id"] in keep_ids]
+    return rows
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--census", required=True, type=Path)
@@ -83,6 +178,15 @@ def main() -> int:
     ap.add_argument("--max-per-clade", type=int, default=0,
                     help="cap anchors per clade; a clade of 10k near-identical "
                          "copies does not need every one aligned")
+    ap.add_argument("--cap-mode",
+                    choices=["stratified", "diverse", "hash", "first"],
+                    default="stratified",
+                    help="how the cap chooses which anchors to keep: spread "
+                         "across anchor-protein diversity (default), a "
+                         "deterministic order-independent sample, or input "
+                         "order (the old behaviour; reproduces earlier runs)")
+    ap.add_argument("--seed", type=int, default=1,
+                    help="tie-break seed for --cap-mode diverse/hash")
     args = ap.parse_args()
     require_slurm("window extraction")
     args.out.mkdir(parents=True, exist_ok=True)
@@ -138,15 +242,18 @@ def main() -> int:
             })
 
     if args.max_per_clade:
-        kept: dict[str, int] = defaultdict(int)
-        for acc in list(by_genome):
-            keep = []
-            for w in by_genome[acc]:
-                if any(kept[g] < args.max_per_clade for g in w["groups"]):
-                    for g in w["groups"]:
-                        kept[g] += 1
-                    keep.append(w)
-            by_genome[acc] = keep
+        # The cap decides which half of a 9,600-member clade step 4 ever sees,
+        # so it must not be "the first 500 in census order". That order tracks
+        # manifest and accession order, which correlates with submission batch
+        # and therefore with exactly the subclade structure the cap should be
+        # spreading across -- and when R-scape later reports a block as
+        # underpowered there is no way to tell a biologically tight clade from
+        # a narrowly sampled one.
+        cap_rows = select_capped(by_genome, args)
+        with open(args.out / "cap_manifest.tsv", "w") as fh:
+            fh.write("clade_id\tanchor_id\tselected\treason\n")
+            for r in cap_rows:
+                fh.write("\t".join(r) + "\n")
 
     # Anchor proteins per clade. Written from the same post-cap membership as
     # the windows, so the protein set and the window set are the same anchors —

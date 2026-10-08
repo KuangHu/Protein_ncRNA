@@ -1,16 +1,21 @@
 # Protein_ncRNA
 
-> **STATUS: steps 1–6 built and run end to end. Results in
-> [`REPORT.md`](REPORT.md); steps 7–9 not started.**
-> 343,125 anchors → 43 selected clades → 24 candidate blocks in 21 loci, above
-> an empirical within-family permutation floor. Two independent GroupII_RT
-> clades returned the expected bipartite architecture — structured noncoding
-> blocks immediately flanking the RT ORF on both sides — and one carries strong
-> R-scape covariation support (19 covarying pairs against 4.1 expected, PPV
-> 100%). Most other candidates are too sequence-similar for covariation to be
-> informative and are reported as **underpowered, not negative**.
-> Read [`REPORT.md`](REPORT.md) for the numbers and `docs/PROJECT_STATUS.md`
-> for the history.
+> **STATUS: steps 1–6 built and run end to end. The published result numbers
+> are DEPRECATED pending a corrected re-run — see the banner in
+> [`REPORT.md`](REPORT.md).**
+>
+> Review found that step 3 estimated clade identity over raw anchors, which in
+> these duplicate-heavy families measures copy number rather than divergence.
+> Since that statistic gates clade selection, it decided which clades the whole
+> pipeline ran on. Corrected (deduplicate on sequence, then sample), the
+> selected clade set goes from 43 to 75 and every downstream number changes.
+> A corrected end-to-end run is in progress; its output will replace
+> `REPORT.md`.
+>
+> The method, the blind-control discipline and the test suite stand. What is
+> withdrawn is the specific set of candidate blocks and the one GroupII_RT
+> covariation hit, which must be rediscovered on the corrected clade set before
+> it is claimed again.
 
 Blind discovery of protein-associated noncoding RNAs. A protein or locus is the
 **only** anchor: the discovery stage uses no known guide RNA, msr/msd, tracrRNA
