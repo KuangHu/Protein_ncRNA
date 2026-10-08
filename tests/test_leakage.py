@@ -32,6 +32,7 @@ BLIND_CHAIN = [
     "permutation_null.py", "discover_blocks.py", "cap_diagnostics.py",
     "export_blocks.py", "fold_blocks.py", "locus_report.py",
     "bags_to_windows.py", "expand_by_homology.py", "bag_query_proteins.py",
+    "arm2_nulls.py", "arm2_null_report.py",
 ]
 
 # Boundary scripts: they compute blind columns and then *append* benchmark
