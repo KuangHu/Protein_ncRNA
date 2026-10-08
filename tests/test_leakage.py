@@ -33,6 +33,7 @@ BLIND_CHAIN = [
     "export_blocks.py", "fold_blocks.py", "locus_report.py",
     "bags_to_windows.py", "expand_by_homology.py", "bag_query_proteins.py",
     "arm2_nulls.py", "arm2_null_report.py",
+    "build_census.py", "stage_family_windows.py",
 ]
 
 # Boundary scripts: they compute blind columns and then *append* benchmark
