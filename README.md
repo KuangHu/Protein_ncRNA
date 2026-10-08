@@ -6,7 +6,7 @@
 > an empirical within-family permutation floor. Two independent GroupII_RT
 > clades returned the expected bipartite architecture — structured noncoding
 > blocks immediately flanking the RT ORF on both sides — and one carries strong
-> R-scape covariation support (18 covarying pairs against 4.1 expected, PPV
+> R-scape covariation support (19 covarying pairs against 4.1 expected, PPV
 > 100%). Most other candidates are too sequence-similar for covariation to be
 > informative and are reported as **underpowered, not negative**.
 > Read [`REPORT.md`](REPORT.md) for the numbers and `docs/PROJECT_STATUS.md`

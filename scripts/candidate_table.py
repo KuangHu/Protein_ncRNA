@@ -53,6 +53,10 @@ def main() -> int:
                     / "configs" / "blind" / "step4.json")
     ap.add_argument("--benchmark", type=Path,
                     help="benchmark dir; adds benchmark_* annotation columns only")
+    ap.add_argument("--allow-incomplete", action="store_true",
+                    help="build the table from a step-4 run that lost clades; "
+                         "the decoy denominator will be short and the empirical "
+                         "FDR correspondingly optimistic")
     ap.add_argument("--replicates", type=int, default=3,
                     help="decoy replicates per real clade, for null scaling")
     args = ap.parse_args()
@@ -61,6 +65,30 @@ def main() -> int:
     hi = cfg["high_confidence_floor"]
     bench_only = set(cfg.get("benchmark_only_families", []))
     args.out.mkdir(parents=True, exist_ok=True)
+
+    # Every number in this table is read against the decoy null, so a step-4 run
+    # that lost clades cannot be used: a missing decoy clade shrinks the null's
+    # denominator and lowers the empirical FDR for free. Refuse rather than
+    # annotate, because the resulting table would look entirely normal.
+    ds = args.blocks / "discovery_summary.json"
+    if ds.exists():
+        d = json.loads(ds.read_text())
+        if d.get("complete") is False and args.allow_incomplete:
+            print(f"WARNING: {args.blocks} lost {d.get('n_failures')} clades; "
+                  f"the decoy denominator is short and every "
+                  f"decoy_empirical_p_family below is optimistic",
+                  file=sys.stderr)
+        elif d.get("complete") is False:
+            raise SystemExit(
+                f"{args.blocks} is an incomplete step-4 run "
+                f"({d.get('n_failures')} clades failed; see failure_report.tsv). "
+                f"Re-run step 4, or pass --allow-incomplete to build a table "
+                f"whose decoy denominator is known to be short.")
+        if "complete" not in d:
+            print(f"note: {ds} predates the completeness flag; "
+                  f"clade counts not verified", file=sys.stderr)
+    elif not args.allow_incomplete:
+        raise SystemExit(f"no {ds}; cannot verify the step-4 run was complete")
 
     blocks = read_tsv(args.blocks / "blocks.tsv")
     stats = {s["clade"]: s for s in read_tsv(args.blocks / "clade_stats.tsv")}

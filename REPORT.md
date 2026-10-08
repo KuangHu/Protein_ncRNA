@@ -1,7 +1,12 @@
 # Blind protein-anchored ncRNA discovery — results to date
 
-Generated 2026-10-07. All numbers below come from files under
+Generated 2026-10-07 from the post-strand-fix run (`blocks_strandfix_26738251`,
+`step4_candidates_strandfix_26738251`). All numbers below come from files under
 `/global/scratch/users/kh36969/protein_ncrna/`; each section names its source.
+
+R-scape resamples its null on every invocation, so covarying-pair counts move by
+about one between runs. Where a count is quoted, it is the one in the named file,
+not a constant.
 
 The discovery path never reads a known RNA. No guide RNA, msr/msd, tracrRNA or
 bridge RNA sequence, length or structure model enters anchor selection, clade
@@ -37,7 +42,7 @@ negative coordinates are upstream. Windows average ~86% coding.
 
 ## 2. Decoy calibration
 
-`permutation_null.py`, `refsweep_26723281/k3/`, `step4_candidates/step4_family_null.tsv`
+`permutation_null.py`, `blocks_strandfix_26738251/`, `step4_candidates_strandfix_26738251/step4_family_null.tsv`
 
 The null is a **within-family permutation**: 129 decoy clades (3 replicates ×
 43 real clades), matched on family, size, window length, anchor geometry, ORF
@@ -63,7 +68,7 @@ Frozen defaults: `diverse_kmer` references, k=3, `min_recurrence` 0.5,
 
 ## 3. The 24 non-Cas3 candidates
 
-`step4_candidates/step4_candidates.tsv`, `triage/triage_blocks.tsv`, `triage/triage_loci.tsv`
+`step4_candidates_strandfix_26738251/step4_candidates.tsv`, `triage/triage_blocks.tsv`, `triage/triage_loci.tsv`
 
 24 blocks ≥0.80 across 13 clades, grouped into **21 loci**. Grouping is
 anchor-geometric: blocks of one clade merge when both lie within 500 bp of the
@@ -100,7 +105,7 @@ strand.
 | downstream arm | +1389 → +1465, 76 bp, 478 members | +1822 → +1893, 71 bp, 429 members |
 | coordinate scatter | IQR ±1 bp | IQR ±1 bp |
 | strand agreement | 493/493 and 478/478 `+` | 483/483 and 429/429 `+` |
-| covariation | **18 TP / 4.1 expected / PPV 100 / FP 0** | 3 TP, power `none` |
+| covariation | **19 TP / 4.1 expected / PPV 100 / FP 0** | 3 TP, power `none` |
 
 That is the architecture of a group II intron with its ORF masked out: the RT
 sits inside domain IV, domains I–III lie 5′ of it and domains V–VI lie 3′. The
@@ -140,7 +145,7 @@ seven.
 
 ## 6. Most candidates are covariation-underpowered, and that is not a negative
 
-`fold_all080/fold_summary.tsv`
+`step4_candidates_strandfix_26738251/fold_all080/fold_summary.tsv`
 
 24 blocks folded de novo (MAFFT → RNAalifold → R-scape) on their own members
 only. No curated family or covariance model is read at this stage.
@@ -183,7 +188,7 @@ Supportable:
 > floor, forming 21 loci. Two independent GroupII_RT clades yielded the expected
 > bipartite architecture — structured noncoding blocks immediately flanking the
 > RT ORF on both sides — and one of them carries strong R-scape covariation
-> support (18 covarying pairs against 4.1 expected, PPV 100%). Most remaining
+> support (19 covarying pairs against 4.1 expected, PPV 100%). Most remaining
 > candidates are too sequence-similar for covariation to be informative, so they
 > are reported as underpowered rather than negative.
 

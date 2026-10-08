@@ -136,6 +136,29 @@ def _merge(iv: list[tuple[int, int]]) -> list[tuple[int, int]]:
     return [(s, e) for s, e in out]
 
 
+def trim_member(a: int, b: int, ba: int, bb: int, ma: int, mb: int,
+                strand: str) -> tuple[int, int]:
+    """Cut a member interval down to the part answering to a block.
+
+    `[a, b)` is a segment on the reference axis and `[ma, mb)` is the same
+    piece of sequence on the member's axis; `[ba, bb)` is the called block.
+    Both intervals are stored ascending, but a minus-strand HSP maps them in
+    opposite directions, so trimming the reference's *left* end must shorten
+    the member's *right* end.
+
+    Applying the plus-strand formula to a minus HSP returns a mirrored slice --
+    the right length, at the wrong place inside the HSP -- and does so
+    silently, propagating into block_members.tsv, the block FASTAs, the padded
+    exports and every triage coordinate. `tests/test_blocks.py` pins the
+    mirror property rather than leaving it to inspection of BLAST output.
+    """
+    left_trim = max(a, ba) - a
+    right_trim = b - min(b, bb)
+    if strand == "+":
+        return ma + left_trim, mb - right_trim
+    return ma + right_trim, mb - left_trim
+
+
 def subtract(s: int, e: int, mask: list[tuple[int, int]]) -> list[tuple[int, int]]:
     """The parts of [s, e) left after removing coding sequence.
 
@@ -399,9 +422,7 @@ def call_blocks(clade: str, recs: list[dict], args) -> tuple[list[dict], dict]:
                 ov = min(b, bb) - max(a, ba)
                 if ov <= 0:
                     continue
-                # Trim the member interval to the part answering to the block.
-                fa = ma + (max(a, ba) - a)
-                fb = mb - (b - min(b, bb))
+                fa, fb = trim_member(a, b, ba, bb, ma, mb, strand)
                 if best is None or ov > best[0]:
                     best = (ov, fa, fb, strand, pid)
             if best:
@@ -522,6 +543,10 @@ def main() -> int:
     ap.add_argument("--decoys", type=Path)
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--allow-partial", action="store_true",
+                    help="keep output when some clades failed, for debugging; "
+                         "the run is marked incomplete and candidate_table.py "
+                         "will refuse it")
     ap.add_argument("--threads", type=int, default=4, help="blastn threads per clade")
     ap.add_argument("--references", type=int, default=cfg.get("k_references"))
     ap.add_argument("--proteins", type=Path,
@@ -627,6 +652,14 @@ def main() -> int:
         "decoy_blocks": len(decoy),
         "real_clades_with_a_block": len({b["clade"] for b in real}),
         "decoy_clades_with_a_block": len({b["clade"] for b in decoy}),
+        # The run is usable downstream only if every clade was processed. A
+        # failed decoy clade silently shrinks the null's denominator and makes
+        # the empirical FDR look better than it is; a failed real clade costs
+        # sensitivity without saying which clade went missing. Neither shows up
+        # in real_clades/decoy_clades, which count attempted clades, not
+        # successful ones.
+        "complete": not fails,
+        "n_failures": len(fails),
         "failures": fails[:10],
         "median_frac_members_with_noncoding_hsp_real": (statistics.median(
             [s["frac_members_with_noncoding_hsp"] for s in all_stats
@@ -646,6 +679,24 @@ def main() -> int:
     print(json.dumps({k: v for k, v in summary.items() if k != "params"}, indent=2))
     print(f"{n_fa} block FASTAs -> {args.out}/blocks")
     print(f"-> {args.out}")
+
+    if fails:
+        with open(args.out / "failure_report.tsv", "w") as fh:
+            fh.write("clade\tdecoy\terror\n")
+            for clade, err in fails:
+                fh.write(f"{clade}\t{clade.startswith('DECOY_')}\t{err}\n")
+        n_d = sum(1 for c, _ in fails if c.startswith("DECOY_"))
+        msg = (f"{len(fails)} of {len(tasks)} clades failed "
+               f"({len(fails) - n_d} real, {n_d} decoy); "
+               f"see {args.out / 'failure_report.tsv'}")
+        if not args.allow_partial:
+            # Exit non-zero so an sbatch chain stops here rather than building a
+            # candidate table on an incomplete null.
+            raise SystemExit(f"{msg}\nRefusing to report partial step-4 output. "
+                             f"Re-run, or pass --allow-partial to keep it for "
+                             f"debugging (it will be marked incomplete and "
+                             f"candidate_table.py will refuse it).")
+        print(f"WARNING: {msg}; output marked incomplete", file=sys.stderr)
     return 0
 
 
