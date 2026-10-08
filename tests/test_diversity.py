@@ -227,3 +227,43 @@ if __name__ == "__main__":
                 traceback.print_exc()
     print("FAILED" if fails else "all diversity tests passed")
     raise SystemExit(1 if fails else 0)
+
+
+def test_cap_dedup_is_a_speed_option_that_preserves_distinct_coverage():
+    """`dedup` must change the cost, not how much diversity survives the cap.
+
+    Collapsing exact duplicates before the diversity layout is worth ~8-30x on
+    the Arm 2 corpus, where CDS01936 has 492,568 anchors over 22,098 distinct
+    proteins. The thing to pin is that it buys nothing else: the plain path
+    already seeds distinct points first, since duplicates sit at distance 0, so
+    both paths must cover the same number of distinct sequences and both must
+    return exactly `cap` ids. They do NOT return the same ids, which is why the
+    option is off by default and the frozen baseline is unaffected.
+    """
+    aa = "ACDEFGHIKLMNPQRSTVWY"
+    rr = random.Random(11)
+    pool = ["".join(rr.choice(aa) for _ in range(120)) for _ in range(60)]
+    ids = [f"a{i}" for i in range(600)]
+    seqs = {i: pool[k % 60] for k, i in enumerate(ids)}
+
+    for cap, want_distinct in ((50, 50), (200, 60)):
+        plain = stratified_sample(ids, seqs, cap, seed=1)
+        fast = stratified_sample(ids, seqs, cap, seed=1, dedup=True)
+        assert len(plain) == cap and len(fast) == cap
+        assert len(set(fast)) == cap
+        assert len({seqs[i] for i in plain}) == want_distinct
+        assert len({seqs[i] for i in fast}) == want_distinct, (
+            "dedup changed how many distinct sequences survive the cap, which "
+            "would make it a sampling change rather than a speed option")
+
+
+def test_cap_returns_exactly_cap_ids_when_duplicates_dominate():
+    """A clade that is almost entirely one sequence still fills its budget."""
+    ids = [f"a{i}" for i in range(500)]
+    seqs = {i: ("MAAAA" * 20 if k else "MCCCC" * 20)
+            for k, i in enumerate(ids)}
+    for d in (False, True):
+        out = stratified_sample(ids, seqs, 100, seed=1, dedup=d)
+        assert len(out) == 100
+        assert len(set(out)) == 100
+        assert len({seqs[i] for i in out}) == 2

@@ -146,8 +146,10 @@ def select_capped(by_genome: dict, args) -> list[tuple]:
                 # Seeding farthest-point and then keeping each seed's *nearest*
                 # representative covers the same breadth with typical members.
                 sel = set(stratified_sample(ids, seqs, args.max_per_clade,
-                                            seed=args.seed, prefer=prefer))
-                why = "stratified_kmer"
+                                            seed=args.seed, prefer=prefer,
+                                            dedup=args.cap_dedup))
+                why = ("stratified_kmer_dedup" if args.cap_dedup
+                       else "stratified_kmer")
         keep_ids |= sel
         for i in ids:
             rows.append((clade, i, str(i in sel), why))
@@ -155,8 +157,17 @@ def select_capped(by_genome: dict, args) -> list[tuple]:
             print(f"  cap {clade[:58]}: {len(ids)} -> {len(sel)} ({why})",
                   flush=True)
 
+    # Drop genomes the cap emptied, not just the anchors it cut. The extraction
+    # loop opens one gzipped genome per surviving key, so leaving the emptied
+    # ones behind costs a full genome read each to produce nothing: measured on
+    # the Arm 2 pilot, CDS00961 read 17,323 genomes to carve 2,000 windows.
+    # The windows produced are identical either way.
     for acc in list(by_genome):
-        by_genome[acc] = [w for w in by_genome[acc] if w["anchor_id"] in keep_ids]
+        kept = [w for w in by_genome[acc] if w["anchor_id"] in keep_ids]
+        if kept:
+            by_genome[acc] = kept
+        else:
+            del by_genome[acc]
     return rows
 
 
@@ -187,6 +198,14 @@ def main() -> int:
                          "order (the old behaviour; reproduces earlier runs)")
     ap.add_argument("--seed", type=int, default=1,
                     help="tie-break seed for --cap-mode diverse/hash")
+    ap.add_argument("--cap-dedup", action="store_true",
+                    help="collapse exact-duplicate anchor proteins before the "
+                         "cap's diversity layout. Pure speed: O(cap x n) over "
+                         "492k anchors with 22k distinct proteins drops from "
+                         "~3.7 h to ~12 min. Covers the same number of distinct "
+                         "sequences but selects DIFFERENT ids, so it is off by "
+                         "default -- the frozen baseline (26743719) was built "
+                         "without it and needs it off to reproduce.")
     args = ap.parse_args()
     require_slurm("window extraction")
     args.out.mkdir(parents=True, exist_ok=True)

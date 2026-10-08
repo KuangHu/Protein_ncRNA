@@ -124,7 +124,7 @@ def _assign(ids: list[str], seeds: list[str], prof: dict[str, set[str]],
 
 def stratified_sample(ids: list[str], seqs: dict[str, str], cap: int,
                       seed: int = 0, prefer: dict[str, tuple] | None = None,
-                      k: int = 5) -> list[str]:
+                      k: int = 5, dedup: bool = False) -> list[str]:
     """Up to `cap` ids spanning the set's diversity, without taking its outliers.
 
     This is the right sampler for a *cap*, where `farthest_point` is not.
@@ -138,6 +138,26 @@ def stratified_sample(ids: list[str], seqs: dict[str, str], cap: int,
     member of each group first. Breadth comes from visiting every group before
     revisiting any; typicality comes from the within-group ordering. The result
     is exactly `cap` ids whenever the set is larger than that.
+
+    `dedup` collapses exact duplicates before the layout. Two identical
+    proteins are at distance 0 by definition, so comparing them adds nothing
+    while costing the same as any other pair -- and that cost is the whole run
+    time, O(cap x n). On the Arm 2 corpus CDS01936 carries 492,568 anchors over
+    22,098 distinct proteins, so 95.5% of the comparisons are between copies:
+    measured, ~3.7 hours of work for a choice available in ~12 minutes.
+
+    It is a SPEED option and nothing more. Measured against the full layout it
+    covers exactly the same number of distinct sequences -- the plain path
+    already seeds distinct points first, because duplicates sit at distance 0 --
+    but it does NOT return the same ids, with overlap as low as 23 of 50 on a
+    synthetic set. So it is off by default: the frozen genomic baseline
+    (v1.1-frozen, job 26743719) was produced without it, and turning it on
+    silently would make that run unreproducible. Callers that opt in must record
+    that they did.
+
+    Either way the duplicates are not discarded: when the distinct sequences
+    run out before the budget does, the existing top-up fills the rest from
+    whatever is left, so the result is exactly `cap` ids under both paths.
     """
     if cap <= 0 or len(ids) <= cap:
         return sorted(ids)
@@ -148,6 +168,22 @@ def stratified_sample(ids: list[str], seqs: dict[str, str], cap: int,
     if not placed:
         return hash_sample(ids, cap, seed)
     pref = prefer or {}
+
+    # One representative per distinct sequence, chosen by the same preference
+    # that orders everything else, so a truncated window never represents a
+    # sequence that a complete one could.
+    by_seq: dict[str, list[str]] = {}
+    for i in placed:
+        by_seq.setdefault(seqs[i], []).append(i)
+    copies: dict[str, list[str]] = {}
+    reps: list[str] = []
+    for s, mem in by_seq.items():
+        mem = sorted(mem, reverse=True, key=lambda i: (pref.get(i, ()), tie[i]))
+        reps.append(mem[0])
+        copies[mem[0]] = mem[1:]
+    reps.sort()
+    if dedup and len(reps) < len(placed):
+        placed = reps
 
     seeds = farthest_point(placed, seqs, min(cap, len(placed)), seed=seed,
                            prefer=prefer, k=k)

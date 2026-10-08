@@ -25,4 +25,5 @@ echo "bag: $BAG"
 $PY -u scripts/extract_windows.py --census "$E/pilot_census" \
     --genomes out/real_genomes.tsv --family "$BAG" \
     --out "$E/pilot_windows/$BAG" --workers "${SLURM_CPUS_PER_TASK}" \
-    --proteins --max-per-clade "${PILOT_CAP:-2000}" --cap-mode stratified
+    --proteins --max-per-clade "${PILOT_CAP:-2000}" --cap-mode stratified \
+    --cap-dedup
