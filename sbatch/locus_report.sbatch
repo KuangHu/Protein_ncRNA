@@ -13,7 +13,7 @@ cd /global/home/users/kh36969/tools/Protein_ncRNA
 # unblind branch, after this table exists.
 PY=/global/home/users/kh36969/.conda/envs/opfi/bin/python
 S=/global/scratch/users/kh36969/protein_ncrna
-RUN=${RUN:-final_26739540}
+RUN=${RUN:-final_26743719}
 BLK=${BLK:-$S/blocks_$RUN}
 WIN=${WIN:-$S/windows_$RUN}
 CAND=${CAND:-$S/step4_candidates_$RUN}

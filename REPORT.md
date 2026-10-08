@@ -1,13 +1,13 @@
 # Blind protein-anchored ncRNA discovery — corrected run
 
-Generated 2026-10-07 from job **26739540**, the first end-to-end run of the
+Generated 2026-10-08 from job **26743719**, the first end-to-end run of the
 corrected chain: dedup-sequence clade identity → stratified window cap →
 quota-constrained within-family decoys → step 4 → benchmark → export → fold →
 triage.
 
 Source directories under `/global/scratch/users/kh36969/protein_ncrna/`:
-`clades_final_26739540`, `windows_final_26739540`, `blocks_final_26739540`,
-`step4_candidates_final_26739540`, `known_retron_benchmark_final_26739540`.
+`clades_final_26743719`, `windows_final_26743719`, `blocks_final_26743719`,
+`step4_candidates_final_26743719`, `known_retron_benchmark_final_26743719`.
 
 **This supersedes the earlier report**, which is kept as a development log at
 [`docs/DEPRECATED_REPORT_raw_anchor_identity.md`](docs/DEPRECATED_REPORT_raw_anchor_identity.md).
@@ -30,34 +30,31 @@ about one between runs. Each count quoted is the one in the named file.
 
 ## Summary
 
-> ## ⚠ Step-4 numbers are being recomputed (job 26743719)
+> ### Coordinate bug found and fixed before these numbers were published
 >
-> A coordinate bug was found after this report was written: `trim_member`
-> measured the block trim on the reference axis and applied it verbatim to the
-> member axis, but a BLAST HSP is gapped, so the two axes differ in length. Where
-> a member carried a deletion and its overlap with the block was small, the trims
-> together exceeded the member's span and the interval came back with
-> `end < start`.
+> `trim_member` measured the block trim on the reference axis and applied it
+> verbatim to the member axis, but a BLAST HSP is gapped, so the two axes differ
+> in length. Where a member carried a deletion and its overlap with the block was
+> small, the trims together exceeded the member's span and the interval came back
+> with `end < start`.
 >
-> In this run that is **85 of 66,603 members across 20 of 308 blocks** (73 on the
-> plus strand, so not the minus-strand mirror bug fixed earlier). No score left
-> the valid range here, so the table below is not visibly wrong, but `median_len`
-> and `length_consistency` are wrong for those 20 blocks and member counts move
-> once degenerate members are dropped — which moves `recurrence` and the
-> composite. Treat every step-4 count below as provisional until the re-run lands.
+> In the first run (26739540) that was **85 of 66,603 members across 20 of 308
+> blocks** (73 on the plus strand, so not the minus-strand mirror bug fixed
+> earlier). Fixed in `1db697e` by scaling the trim by the HSP's member/reference
+> length ratio, clamping to the HSP, and dropping members that trim to nothing.
 >
-> **None of the three covariation-supported blocks has an inverted member**, so
-> section 4 and the interpretation reports stand.
->
-> Fixed in `1db697e`; the same bug produced a composite of 2.15 on the MGE
-> insertion corpus, which is what exposed it.
+> **Every number in this report is from the re-run on the fixed caller
+> (26743719): 0 of 66,086 members inverted, maximum composite 0.9940.** The two
+> runs differ by 2 candidates at each floor, both in RT; all three
+> covariation-supported blocks are unchanged. The same bug produced a composite
+> of 2.15 on the MGE insertion corpus, which is what exposed it.
 
 
 > After correcting exact-duplicate protein inflation in clade divergence
 > estimates, a stratified cap, and a quota-preserving same-family permutation
-> null, the blind protein-anchored pipeline selected 75 clades and called 128
+> null, the blind protein-anchored pipeline selected 75 clades and called 126
 > recurrent noncoding blocks above a 0.80 score floor. No permutation decoy
-> reached this score. Among 121 non-Cas3 blocks folded de novo, three had
+> reached this score. Among 119 non-Cas3 blocks folded de novo, three had
 > adequate R-scape power and significant covariation with zero false-positive
 > pairs, including one generic RT clade with a 694-bp upstream block abutting
 > the RT ORF.
@@ -74,7 +71,7 @@ higher scores.
 
 ## 1. Selected clades
 
-`clades_final_26739540/selected_clade_summary.tsv`
+`clades_final_26743719/selected_clade_summary.tsv`
 
 Clade identity is now estimated on **distinct protein sequences**: exact
 duplicates are collapsed before sampling, a single distinct sequence scores 1.0
@@ -116,7 +113,7 @@ exceptions (`TnpB_Cas12f GCA_002300265.2` and `RT GCA_053048085.1`, both at the
 
 ### Post-cap diagnostics
 
-`windows_final_26739540/cap_diagnostics.tsv`
+`windows_final_26743719/cap_diagnostics.tsv`
 
 The cap is only safe if it removes copies rather than diversity. Measured:
 
@@ -140,7 +137,7 @@ biology.
 
 ## 2. Decoy calibration
 
-`permutation_null.py`, `step4_candidates_final_26739540/step4_family_null.tsv`
+`permutation_null.py`, `step4_candidates_final_26743719/step4_family_null.tsv`
 
 225 decoy clades (3 replicates × 75 real clades), matched on family, size, window
 length, anchor geometry, ORF density and GC, with only the relatedness between
@@ -179,7 +176,7 @@ contributed zero, so they constrain the floor only from above.
 
 ## 3. Step-4 candidates
 
-`blocks_final_26739540/discovery_summary.json`, `step4_candidates_final_26739540/step4_candidates.tsv`
+`blocks_final_26743719/discovery_summary.json`, `step4_candidates_final_26743719/step4_candidates.tsv`
 
 | | real | decoy |
 |---|---:|---:|
@@ -192,12 +189,12 @@ contributed zero, so they constrain the floor only from above.
 
 | family | blocks ≥0.80 | decoy blocks ≥0.80 | blocks ≥0.90 | decoy blocks ≥0.90 | null |
 |---|---:|---:|---:|---:|---|
-| RT | 62 | 0 | 30 | 0 | strong |
+| RT | 60 | 0 | 28 | 0 | strong |
 | IS110 | 29 | 0 | 18 | 0 | strong |
 | GroupII_RT | 27 | 0 | 15 | 0 | strong |
 | Cas3 | 7 | 0 | 4 | 0 | strong |
 | TnpB_Cas12f | 3 | 0 | 1 | 0 | strong |
-| **total** | **128** | **0** | **68** | **0** | |
+| **total** | **126** | **0** | **66** | **0** | |
 
 ### How to state this, and how not to
 
@@ -221,7 +218,7 @@ score highest.
 
 This answers the question the correction was run to answer: *on the corrected
 clade set, does blind recurrence still produce noncoding blocks above the
-within-family null?* **Yes, and more cleanly than before** — 128 candidates
+within-family null?* **Yes, and more cleanly than before** — 126 candidates
 against 43-clade-era numbers, with a null that is now trustworthy in all five
 families rather than degenerate in one.
 
@@ -236,34 +233,34 @@ a target it was tuned toward.
 
 ## 4. Fold and covariation
 
-`step4_candidates_final_26739540/fold_all080/fold_summary.tsv`
+`step4_candidates_final_26743719/fold_all080/fold_summary.tsv`
 
-121 of the 128 candidates were folded (RNAalifold on soft-ORF-padded blocks,
+119 of the 126 candidates were folded (RNAalifold on soft-ORF-padded blocks,
 R-scape two-set test on the core alignment). Verdicts under the frozen rule —
 `covariation_supported` requires expected-to-covary ≥3 **and** TP ≥3 **and**
 PPV ≥0.80:
 
 | verdict | n |
 |---|---:|
-| underpowered | 87 |
-| covariation_borderline | 29 |
+| underpowered | 85 |
+| covariation_borderline | 30 |
 | **covariation_supported** | **3** |
-| covariation_test_failed | 2 |
+| covariation_test_failed | 1 |
 
 The honest reading of this table is a statement about **power**, not about
-structure. Only 3 of 121 blocks reached adequate R-scape power (expected
-covarying pairs ≥3); 109 had none at all. **Not one block in the set is
+structure. Only 3 of 119 blocks reached adequate R-scape power (expected
+covarying pairs ≥3); 78 had none at all. **Not one block in the set is
 `tested_no_covariation`** — nothing here was tested with adequate power and found
-to lack covariation. The 29 borderline blocks all sit below adequate power, so
+to lack covariation. The 30 borderline blocks all sit below adequate power, so
 their 1–5 covarying pairs are suggestive and nothing more.
 
 ### The three covariation-supported blocks
 
 | family | clade | side | score | n seq | aln len | mean PID | bp | expected | TP | FP | sens | PPV |
 |---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| RT | `GCA_000951815.1 JYCO01000002` | upstream | 0.966 | 200 | 1029 | 0.473 | 34 | 6.3 | **14** | 0 | 41.2 | **100%** |
-| GroupII_RT | `GCA_006954725.1 AAGSHD010000039` | upstream | 0.885 | 200 | 1262 | 0.753 | 109 | 15.3 | **23** | 0 | 21.1 | **100%** |
-| GroupII_RT | `GCA_002035215.1 MXNX01000032` | upstream | 0.808 | 159 | 853 | 0.949 | 116 | 7.2 | **21** | 0 | 18.1 | **100%** |
+| RT | `GCA_000951815.1 JYCO01000002` | upstream | 0.966 | 200 | 987 | 0.473 | 27 | 5.3 | **12** | 0 | 44.4 | **100%** |
+| GroupII_RT | `GCA_006954725.1 AAGSHD010000039` | upstream | 0.885 | 200 | 1255 | 0.753 | 117 | 16.7 | **22** | 0 | 18.8 | **100%** |
+| GroupII_RT | `GCA_002035215.1 MXNX01000032` | upstream | 0.808 | 159 | 864 | 0.948 | 117 | 7.1 | **21** | 0 | 18.0 | **100%** |
 
 All three have **zero false positives** and PPV 100%, and all three retained
 100% of their clade's distinct proteins through the window cap (155/155, 104/104,
@@ -275,7 +272,7 @@ different clades, found blind.
 
 ## 5. Locus geometry
 
-`step4_candidates_final_26739540/triage/triage_loci.tsv`, `triage_blocks.tsv`
+`step4_candidates_final_26743719/triage/triage_loci.tsv`, `triage_blocks.tsv`
 
 121 blocks resolve into 110 loci (7 loci carry more than one block). Architecture:
 54 upstream, 48 downstream, 6 flanking both sides, 2 split. 20 `nearby_block_group`s
@@ -300,7 +297,7 @@ masked looks like — and it recurs here independently across GroupII_RT clades.
 ## 6. What this run does and does not establish
 
 **Does:**
-- Blind, protein-anchored recurrence produces 128 noncoding blocks that are
+- Blind, protein-anchored recurrence produces 126 noncoding blocks that are
   cleanly separated from a within-family permutation null in all five families,
   with the null now strong everywhere and the floors re-derived from it.
 - Three of those blocks have adequate covariation power and show covariation at
@@ -339,11 +336,11 @@ two GroupII_RT supported blocks are positive-control-like: a structured RNA arm
 beside a group II intron RT is the expected answer. This one is a generic RT
 clade with no known RNA on it.
 
-`step4_candidates_final_26739540/loci/RT_000951815_B002.*`,
+`step4_candidates_final_26743719/loci/RT_000951815_B002.*`,
 `interpretation/RT_000951815_B002.interpretation.md`
 
 **Clade.** 9,643 anchors capped to 500; **155 distinct proteins before the cap
-and 155 after** — the cap cost nothing. Post-cap median identity 0.459, so the
+and 155 after** — the cap cost nothing. Post-cap median identity 0.473, so the
 clade is genuinely diverged rather than a duplicate stack. That divergence is
 what bought the covariation power.
 
@@ -368,25 +365,28 @@ like a CRISPR locus, and there is not enough HNH/TOPRIM/TIR to call it a defence
 RT either. Worth stating plainly: only those groups were scanned, so this is
 weak evidence of absence, not evidence of a new class.
 
-**Covariation.** 14 covarying pairs, 0 false positives, PPV 100%, and they fall
-on **7 distinct helices** rather than piling into one hairpin:
+**Covariation.** 12 covarying pairs, 0 false positives, PPV 100%, sensitivity
+44.4% over 27 tested base pairs (5.3 expected to covary). They fall on **5
+distinct helices** rather than piling into one hairpin:
 
 | helix | i | j | pairs | loop span | max power |
 |---:|---:|---:|---:|---:|---:|
-| 1 | 173 | 664 | 1 | 491 | 0.20 |
-| 2 | 179–184 | 213–218 | 4 | 34 | 0.42 |
-| 3 | 250 | 261 | 1 | 11 | 0.28 |
-| 4 | 298–300 | 358–360 | 2 | 60 | 0.39 |
-| 5 | 307–308 | 329–330 | 2 | 22 | 0.20 |
-| 6 | 343 | 350 | 1 | 7 | 0.11 |
-| 7 | 463–466 | 471–474 | 3 | 8 | 0.28 |
+| 1 | 163–168 | 197–202 | 4 | 34 | 0.45 |
+| 2 | 294–296 | 354–356 | 3 | 60 | 0.32 |
+| 3 | 303–304 | 325–326 | 2 | 22 | 0.39 |
+| 4 | 338–339 | 346–347 | 2 | 8 | 0.24 |
+| 5 | 775 | 792 | 1 | 17 | 0.20 |
 
-Seven separately supported helices including one long-range pair (173×664) is a
-multi-domain fold, not a single stem-loop that happened to covary.
+Five separately supported helices spread across the block is a multi-helix
+element, not a single stem-loop that happened to covary. One claim from the
+pre-fix run does **not** survive: the long-range 173×664 pair is absent from the
+corrected alignment, so there is no evidence here for a single long-range
+tertiary contact, and the earlier "seven helices including one long-range pair"
+reading is withdrawn.
 
 **Reading.** A clade-specific structured noncoding element filling the entire
 intergenic gap immediately upstream of a reverse transcriptase, in 96.6% of a
-155-distinct-protein clade, on one strand, with covariation support on seven
+155-distinct-protein clade, on one strand, with covariation support on five
 helices and no overlap with any described retron ncRNA. This is the shape the
 project was built to find, and it was found without any RNA prior.
 
@@ -414,28 +414,29 @@ underpowered rather than negative.
 ## 9. Discovery triage top 10
 
 `triage/discovery_top10.tsv` — GroupII_RT, Cas3 and known-retron overlaps
-removed, leaving a pool of 91 blocks (59 RT, 29 IS110, 3 TnpB_Cas12f); 3 blocks
+removed, leaving a pool of 89 blocks (57 RT, 29 IS110, 3 TnpB_Cas12f); 3 blocks
 excluded as known-retron overlaps.
 
 | # | family | score | verdict | power | TP/FP | member frac | side | gap bp | len | coding |
 |---:|---|---:|---|---|---|---:|---|---:|---:|---:|
-| 1 | RT | 0.966 | **supported** | adequate | 14/0 | 0.966 | up | **0** | 694 | 0.18 |
+| 1 | RT | 0.966 | **supported** | adequate | 12/0 | 0.966 | up | **0** | 694 | 0.18 |
 | 2 | RT | 0.986 | borderline | none | 1/0 | 0.992 | up | 1280 | 178 | 0.46 |
-| 3 | IS110 | 0.982 | borderline | low | 3/0 | 0.984 | up | **0** | 70 | 0.68 |
+| 3 | IS110 | 0.982 | borderline | low | 2/0 | 0.984 | up | **0** | 70 | 0.68 |
 | 4 | RT | 0.971 | borderline | none | 1/0 | 0.992 | up | **0** | 671 | 0.18 |
-| 5 | RT | 0.902 | borderline | none | 4/0 | 0.902 | up | 1506 | 319 | 0.30 |
+| 5 | RT | 0.906 | borderline | none | 1/1 | 0.906 | down | **0** | 295 | 0.17 |
 | 6 | IS110 | 0.894 | borderline | none | 1/0 | 0.936 | down | 27 | 237 | 0.13 |
-| 7 | RT | 0.886 | borderline | none | 1/0 | 0.886 | up | 348 | 139 | 0.52 |
-| 8 | RT | 0.878 | borderline | none | 1/0 | 0.898 | up | 1268 | 386 | 0.28 |
-| 9 | RT | 0.856 | borderline | none | 2/2 | 0.856 | down | 178 | 146 | 0.00 |
-| 10 | RT | 0.856 | borderline | none | 1/0 | 0.856 | down | 926 | 255 | 0.37 |
+| 7 | RT | 0.888 | borderline | none | 2/1 | 0.978 | up | 1907 | 492 | 0.15 |
+| 8 | RT | 0.886 | borderline | none | 1/0 | 0.886 | up | 348 | 139 | 0.52 |
+| 9 | RT | 0.878 | borderline | none | 1/0 | 0.898 | up | 1268 | 386 | 0.28 |
+| 10 | RT | 0.871 | borderline | none | 3/0 | 0.902 | up | 1506 | 320 | 0.30 |
 
 Ranked by verdict, then PPV band, then score, member fraction, anchor gap and
 coding fraction. The PPV band is not cosmetic: `covariation_borderline` only
 asks whether TP > 0, so a block with **TP=1 and FP=118 (PPV 0.84%)** carries the
-same label as one with TP=4 and FP=0, and ranking on score alone put the first
-above the second. Two such blocks (FP=118 and FP=5) ranked 6th and 4th before
-the band was added and are now outside the top 10.
+same label as one with TP=3 and FP=0, and ranking on score alone put the first
+above the second. The worst case in this run is an RT block at score 0.936 with
+**TP=1 and FP=118**; on score alone it would sit around rank 5, and the band
+moves it out of the top 10. A second (FP=76, score 0.836) is likewise demoted.
 
 Ranks 2–10 are all underpowered or low-power. They are a queue for deeper
 annotation, not nine more results — only #1 has been tested with adequate power.
