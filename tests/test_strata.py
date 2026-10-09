@@ -218,3 +218,52 @@ def test_decoy_status_separates_an_absent_null_from_a_clean_one(tmp_path):
     got = {r[0]: r[col] for r in rows[1:]}
     assert got["CDS0002"] == "not_available"
     assert got["CDS0001"] == "clean"
+
+
+def _win(root: Path, bag: str, n: int = 2) -> None:
+    d = root / bag
+    (d / "proteins").mkdir(parents=True)
+    (d / f"{bag}.fasta").write_text(
+        "".join(f">w{i} family={bag}\nACGT\n" for i in range(n)))
+    (d / f"{bag}.jsonl").write_text(
+        "".join(json.dumps({"anchor_id": f"w{i}", "family": bag}) + "\n"
+                for i in range(n)))
+    (d / "proteins" / f"{bag}.faa").write_text(f">w0\nMKV\n")
+
+
+def test_a_pool_bag_is_staged_under_every_family_it_belongs_to(tmp_path):
+    """Remote-homology pools overlap, and the overlap must survive staging.
+
+    46 of 136 pool bags are homologs of more than one target; CDS02588 serves
+    five. A bag -> family map assigns each such bag to one family and silently
+    deletes it from the others, shrinking pools that were sized and labelled on
+    the full membership -- so a pool reported `strong` would be scored as
+    something smaller, with no error anywhere.
+    """
+    wins = tmp_path / "w"
+    wins.mkdir()
+    for b in ("TGT1", "TGT2", "SHARED", "ONLY1", "ONLY2"):
+        _win(wins, b)
+    pairs = tmp_path / "pairs.tsv"
+    pairs.write_text(
+        "family\tbag_id\trole\tfamily_size\n"
+        "H000\tTGT1\ttarget\t3\nH000\tSHARED\tpool\t3\nH000\tONLY1\tpool\t3\n"
+        "H001\tTGT2\ttarget\t3\nH001\tSHARED\tpool\t3\nH001\tONLY2\tpool\t3\n")
+    subj = tmp_path / "subj.txt"
+    subj.write_text("TGT1\nTGT2\n")
+    out = tmp_path / "staged"
+    r = subprocess.run(
+        [PY, str(ROOT / "scripts" / "stage_family_windows.py"),
+         "--windows", str(wins), "--pairs", str(pairs),
+         "--subjects", str(subj), "--out", str(out), "--min-size", "2"],
+        capture_output=True, text=True, env=ENV)
+    assert r.returncode == 0, r.stderr
+    staged = {p.stem for p in out.glob("*.fasta")}
+    assert "H000__SHARED" in staged and "H001__SHARED" in staged, (
+        f"the shared pool bag reached only one family: {sorted(staged)}")
+    # Both pools keep their full size, which is what they were labelled on.
+    for fam in ("H000", "H001"):
+        assert sum(1 for s in staged if s.startswith(fam + "__")) == 3
+    # The family= tag is rewritten per staged copy, not left as the bag name.
+    assert "family=H000" in (out / "H000__SHARED.fasta").read_text()
+    assert "family=H001" in (out / "H001__SHARED.fasta").read_text()

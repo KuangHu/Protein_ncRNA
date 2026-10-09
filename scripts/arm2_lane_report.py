@@ -33,7 +33,8 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-STRICT = ("within_bag_shuffle", "same_family_permutation")
+STRICT = ("within_bag_shuffle", "same_family_permutation",
+          "homology_pool_permutation")
 MODES = ("genomic_background",) + STRICT
 
 # Pfam novelty for the final sort key: higher is more interesting. A bag with no

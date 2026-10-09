@@ -28,30 +28,55 @@ from pathlib import Path
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--windows", required=True, type=Path)
-    ap.add_argument("--families", required=True, type=Path)
+    ap.add_argument("--windows", required=True, type=Path, nargs="+",
+                    help="one or more dirs of per-bag window dirs; searched in "
+                         "order, first match wins")
+    ap.add_argument("--families", type=Path,
+                    help="bag_id -> family map (one family per bag)")
+    ap.add_argument("--pairs", type=Path,
+                    help="explicit family/bag_id pairs, for pools where a bag "
+                         "legitimately belongs to several families")
     ap.add_argument("--subjects", required=True, type=Path)
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--min-size", type=int, default=4)
     args = ap.parse_args()
+    if not (args.families or args.pairs):
+        ap.error("one of --families or --pairs is required")
     (args.out / "proteins").mkdir(parents=True, exist_ok=True)
 
-    fam = {r["bag_id"]: r["family"] for r in csv.DictReader(
-        open(args.families), delimiter="\t")}
-    size = Counter(fam.values())
+    # (family, bag) pairs are the general form; a flat map is the special case
+    # where every bag has exactly one family.
+    if args.pairs:
+        pairs = [(r["family"], r["bag_id"]) for r in csv.DictReader(
+            open(args.pairs), delimiter="\t")]
+    else:
+        pairs = [(r["family"], r["bag_id"]) for r in csv.DictReader(
+            open(args.families), delimiter="\t")]
+    size = Counter(f for f, _ in pairs)
     subjects = set(args.subjects.read_text().split())
-    keep = {fam[b] for b in subjects
-            if b in fam and size[fam[b]] >= args.min_size}
+    keep = {f for f, b in pairs
+            if b in subjects and size[f] >= args.min_size}
     print(f"{len(keep)} families with >= {args.min_size} members contain a "
           f"subject bag")
 
-    n, skipped = 0, 0
-    for d in sorted(args.windows.iterdir()):
-        if not d.is_dir():
+    # One source dir per bag; later dirs are fallbacks for bags extracted in a
+    # separate pass.
+    src_of: dict[str, Path] = {}
+    for root in args.windows:
+        if not root.is_dir():
             continue
-        bag = d.name
-        f = fam.get(bag)
+        for d in sorted(root.iterdir()):
+            if d.is_dir() and (d / f"{d.name}.fasta").exists():
+                src_of.setdefault(d.name, d)
+
+    n, skipped = 0, 0
+    for f, bag in sorted(set(pairs)):
         if f not in keep:
+            continue
+        d = src_of.get(bag)
+        if d is None:
+            print(f"  {bag}: no windows found, skipped", file=sys.stderr)
+            skipped += 1
             continue
         jl, fa = d / f"{bag}.jsonl", d / f"{bag}.fasta"
         if not jl.exists() or not fa.exists():

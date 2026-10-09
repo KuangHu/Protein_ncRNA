@@ -25,7 +25,8 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-MODES = ["genomic_background", "within_bag_shuffle", "same_family_permutation"]
+MODES = ["genomic_background", "within_bag_shuffle",
+         "same_family_permutation", "homology_pool_permutation"]
 
 
 def read_tsv(p: Path) -> list[dict]:

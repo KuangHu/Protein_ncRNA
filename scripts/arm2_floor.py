@@ -37,7 +37,8 @@ import statistics
 from collections import defaultdict
 from pathlib import Path
 
-STRICT = ("within_bag_shuffle", "same_family_permutation")
+STRICT = ("within_bag_shuffle", "same_family_permutation",
+          "homology_pool_permutation")
 MODES = ("genomic_background",) + STRICT
 
 
