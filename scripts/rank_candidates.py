@@ -67,17 +67,32 @@ def i(x, default=0):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--candidates", required=True, type=Path)
-    ap.add_argument("--null", required=True, type=Path)
+    ap.add_argument("--null", required=True, type=Path, nargs="+",
+                    help="one or more null_comparison.tsv; a bag may be "
+                         "challenged in several runs and all of them count")
     ap.add_argument("--pool", required=True, type=Path)
     ap.add_argument("--pfam", type=Path)
     ap.add_argument("--pfam-sensitive", type=Path,
                     help="pfam_sensitive.tsv; adds the sub-threshold status so "
                          "a true orphan is distinguishable from a bag that "
                          "merely has no domain above the curated bar")
-    ap.add_argument("--targets", required=True, type=Path)
+    ap.add_argument("--targets", type=Path,
+                    help="bags to rank; default is every bag with a real block")
+    ap.add_argument("--control-lanes", nargs="+",
+                    default=["known_rna_mge", "host_like"],
+                    help="lanes written to ranked_all but kept out of the "
+                         "discovery table")
     ap.add_argument("--floor", type=float, required=True)
     ap.add_argument("--out", required=True, type=Path)
-    ap.add_argument("--null-mode", default="homology_pool_permutation")
+    ap.add_argument("--null-mode", nargs="+",
+                    default=["same_family_permutation",
+                             "homology_pool_permutation"],
+                    help="strict modes whose decoys count as applied pressure. "
+                         "within_bag_shuffle is deliberately NOT a default: it "
+                         "produced zero blocks in every cell of every run, so "
+                         "counting its clades would inflate test strength for "
+                         "every bag equally -- the same mistake that let Arm 1 "
+                         "call 1,497 blockless clades strong.")
     ap.add_argument("--breadth-ref", type=int, default=500,
                     help="distinct-anchor count treated as full lineage "
                          "breadth; below it the signal is discounted")
@@ -93,15 +108,42 @@ def main() -> int:
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
-    targets = args.targets.read_text().split()
     cand = {r["bag"]: r for r in csv.DictReader(
         open(args.candidates), delimiter="\t")}
+    if args.targets:
+        targets = args.targets.read_text().split()
+    else:
+        # Every bag step 4 actually scored a block in. A bag with no block has
+        # nothing to rank and is reported separately as a measured negative,
+        # not as a candidate that lost.
+        targets = sorted(b for b, r in cand.items() if i(r.get("n_blocks")) > 0)
     pool = {r["target"]: r for r in csv.DictReader(
         open(args.pool), delimiter="\t")}
-    nullrow = {}
-    for r in csv.DictReader(open(args.null), delimiter="\t"):
-        if r["null_type"] == args.null_mode:
-            nullrow[r["bag"]] = r
+    # Aggregate every strict null a bag faced, across runs. Six of the
+    # homology-pool targets also carry an inert same_family null from the
+    # stratified run; two independent nulls are more pressure than one, and
+    # taking only the last file read would silently discard the other.
+    modes = set(args.null_mode)
+    agg: dict[str, dict] = {}
+    for path in args.null:
+        if not path.exists():
+            continue
+        for r in csv.DictReader(open(path), delimiter="\t"):
+            if r["null_type"] not in modes:
+                continue
+            nc, nb = i(r["n_decoy_clades"]), i(r["n_decoy_blocks"])
+            if nc == 0 and nb == 0:
+                continue        # a null that was never constructed
+            a = agg.setdefault(r["bag"], {
+                "n_decoy_clades": 0, "n_decoy_blocks": 0,
+                "decoy_max_score": float("nan"), "modes": []})
+            a["n_decoy_clades"] += nc
+            a["n_decoy_blocks"] += nb
+            dm = f(r.get("decoy_max_score"), float("nan"))
+            if dm == dm and not (a["decoy_max_score"] >= dm):
+                a["decoy_max_score"] = dm
+            a["modes"].append(r["null_type"])
+    nullrow = agg
     doms = {}
     if args.pfam and args.pfam.exists():
         for r in csv.DictReader(open(args.pfam), delimiter="\t"):
@@ -129,7 +171,8 @@ def main() -> int:
 
         n_dc = i(n.get("n_decoy_clades"))
         n_db = i(n.get("n_decoy_blocks"))
-        dmax = f(n.get("decoy_max_score"), float("nan"))
+        dmax = n.get("decoy_max_score", float("nan"))
+        dmax = dmax if isinstance(dmax, float) else f(dmax, float("nan"))
 
         if n_db > 0:
             challenge, basis = dmax, "decoy_max"
@@ -179,6 +222,8 @@ def main() -> int:
             "n_source_bags": i(p.get("n_source_bags")),
             "pool_distinct_proteins": i(p.get("pool_distinct_proteins")),
             "lane": c.get("lane", ""),
+            "is_control": c.get("lane", "") in set(args.control_lanes),
+            "null_modes_applied": ";".join(sorted(set(n.get("modes", [])))),
             "pfam_domains": doms.get(t, "") or "",
             "pfam_sensitive_status": sens.get(t, {}).get(
                 "sensitive_status", ""),
@@ -192,10 +237,36 @@ def main() -> int:
         r["rank"] = k
 
     cols = list(rows[0]) if rows else []
-    with open(args.out / "ranked_candidates.tsv", "w") as fh:
-        fh.write("\t".join(cols) + "\n")
-        for r in rows:
-            fh.write("\t".join(str(r[c]) for c in cols) + "\n")
+
+    def write(path, rs):
+        with open(path, "w") as fh:
+            fh.write("\t".join(cols) + "\n")
+            for r in rs:
+                fh.write("\t".join(str(r[c]) for c in cols) + "\n")
+
+    write(args.out / "ranked_candidates.tsv", rows)
+    write(args.out / "ranked_all.tsv", rows)
+    # Controls and host-like background are ranked, because their standing is
+    # the calibration everything else is read against, but they are kept out of
+    # the discovery table: a spike-in lane that reaches it would be reported as
+    # a novel protein-ncRNA association when it is a known one.
+    disc = [r for r in rows if not r["is_control"]]
+    for k, r in enumerate(disc, 1):
+        r = dict(r)
+    write(args.out / "ranked_discovery.tsv", disc)
+
+    # Scored, and produced nothing. This is a measured negative and belongs in
+    # the record; it is not a candidate that ranked last.
+    nb = [b for b, c in cand.items()
+          if str(c.get("step4_scored")) == "True" and i(c.get("n_blocks")) == 0]
+    with open(args.out / "scored_no_block.tsv", "w") as fh:
+        fh.write("bag\tlane\tn_distinct_anchors\tfamily_size\t"
+                 "pfam_domains\n")
+        for b in sorted(nb):
+            c = cand[b]
+            fh.write(f"{b}\t{c.get('lane','')}\t"
+                     f"{c.get('n_distinct_anchors','')}\t"
+                     f"{c.get('family_size','')}\t{doms.get(b,'')}\n")
     (args.out / "ranking_params.json").write_text(json.dumps({
         "floor": args.floor, "null_mode": args.null_mode,
         "breadth_ref": args.breadth_ref,
@@ -216,6 +287,9 @@ def main() -> int:
               f"{r['n_decoy_clades']:3d} {r['n_decoy_blocks']:4d} "
               f"{r['margin']:7.4f} {r['challenge_basis']:10s} "
               f"{r['test_strength']:5.2f}")
+    print(f"\n{len(disc)} discovery/unknown bags ranked, "
+          f"{len(rows) - len(disc)} control/host-like bags ranked separately, "
+          f"{len(nb)} scored bags produced no block at all")
     for tier in "ABCD":
         n = sum(1 for r in rows if r["tier"] == tier)
         if n:
