@@ -9,7 +9,7 @@
 set -euo pipefail
 cd /global/home/users/kh36969/tools/Protein_ncRNA
 E=/global/scratch/users/kh36969/protein_ncrna/expand
-python3 scripts/orient_candidates.py \
+PYTHONNOUSERSITE=1 /global/home/users/kh36969/.conda/envs/opfi/bin/python -u scripts/orient_candidates.py \
   --candidates "$E/nc_insertion/candidates" \
   --windows "$E/elem_windows" \
   --out "$E/nc_insertion/oriented"

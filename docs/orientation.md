@@ -52,3 +52,46 @@ module, a probe or a primer -- cannot be read off it.
 anchor-oriented windows and re-emits it on the strand the window shows,
 with the side it sits on, into `nc_insertion/oriented/`. It writes new files
 and changes no score, so the pipeline stays frozen.
+
+## Result
+
+333 candidates mapped back into their windows; 309 have no windows and 41 no
+hit above 90% identity.
+
+```
+flipped 160 / 333 = 48%
+```
+
+A coin flip, as predicted. Now that the frame is the transposase's, the side
+each candidate sits on is readable, and it is not uniform:
+
+| group | n | upstream | downstream | overlaps tnp |
+|---|---|---|---|---|
+| IS1 | 9 | **89%** | 11% | 0% |
+| IS3 | 44 | **70%** | 20% | 9% |
+| ISL3 | 24 | 58% | 38% | 4% |
+| IS110 | 21 | 43% | 48% | 10% |
+| IS200/605 | 9 | 44% | 44% | 11% |
+| GroupII | 10 | 10% | **80%** | 10% |
+| IS4/5/10 | 52 | 40% | 35% | **25%** |
+| all | 333 | 50% | 35% | 16% |
+
+IS1 and IS3 put their conserved non-coding almost entirely upstream of the
+transposase; group II puts it downstream; IS4/5/10 has by far the most
+candidates overlapping the ORF, which fits the earlier finding that those
+elements carry transposase ORFs far shorter than their element.
+
+## The Ldr check
+
+Both type I toxin-antitoxin bags come back the same way:
+
+```
+CDS00749  377 bp  revcomp  overlaps_tnp  frac_modal_side 1.000
+CDS01102  285 bp  revcomp  overlaps_tnp  frac_modal_side 1.000
+```
+
+Every placed hit puts the candidate **on top of the toxin ORF**, and both
+needed flipping. That is the architecture of a type I antitoxin: RdlD is
+transcribed antisense to, and overlapping, ldrD. The blind candidate landed
+on the right sequence in the right relationship to the protein, and only the
+orientation pass makes that visible.
