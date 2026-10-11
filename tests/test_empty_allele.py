@@ -64,3 +64,33 @@ def test_genome_map_covers_every_species_the_targets_use():
     need = {"ecoli", "kpneu", "efaecium", "efaecalis", "senterica",
             "paeruginosa", "sa_k24", "spneumoniae", "lmonocytogenes"}
     assert need <= have, f"missing genome sources for {need - have}"
+
+
+def test_stage2_reads_side_and_strand_rather_than_assuming_them():
+    """Windows are strand-normalised, so a plus hit is the tnp's direction --
+    but which side the candidate sits on must be measured per window, and a
+    candidate that scatters must stay visible rather than be averaged away."""
+    src = (ROOT / "scripts" / "confirm_in_windows.py").read_text()
+    assert 'side = "upstream" if a1 <= 0 else (' in src
+    assert "frac_modal_side" in src and "frac_same_strand_as_tnp" in src
+
+
+def test_stage2_null_is_same_family_other_bags():
+    src = (ROOT / "scripts" / "confirm_in_windows.py").read_text()
+    assert "byfam[family_of(bag)] if b != bag" in src
+    assert "enrichment_over_offbag" in src
+
+
+def test_stage1_emits_a_real_member_not_a_consensus():
+    """Stage 2 searches real windows, so the candidate has to be a sequence
+    that exists in a genome."""
+    src = (ROOT / "scripts" / "nc_rna_in_insertion.py").read_text()
+    assert "cand = mem[len(mem) // 2]" in src
+    assert "want_members=True" in src
+
+
+def test_recurrence_counts_distinct_sites_not_sequences():
+    """One site contributing three near-identical regions is one observation."""
+    src = (ROOT / "scripts" / "nc_rna_in_insertion.py").read_text()
+    assert "k = len(set(g))" in src
+    assert "rec = k / n_sites" in src

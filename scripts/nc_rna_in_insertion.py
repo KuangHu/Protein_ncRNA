@@ -92,8 +92,14 @@ def cluster(seqs, tmp: Path, mmseqs: str, ident: float, cov: float,
     return [sorted(v) for v in groups.values()]
 
 
-def best_for(seqs, n_sites, tmp, mmseqs, args):
-    """Strongest cluster of a clade: (recurrence, n_sites, median_len)."""
+def best_for(seqs, n_sites, tmp, mmseqs, args, want_members=False):
+    """Strongest cluster of a clade: (recurrence, n_sites, median_len[, seqs]).
+
+    With want_members the cluster's own sequences come back too. Stage 2 counts
+    this candidate in the tnp-anchored windows, which are 7x more numerous than
+    the called insertion sites, so the sequence has to leave this script or that
+    stage has nothing to search for.
+    """
     cl = cluster(seqs, tmp, mmseqs, args.ident, args.cov, args.threads)
     by_site = defaultdict(list)
     for sid, s in seqs:
@@ -104,9 +110,11 @@ def best_for(seqs, n_sites, tmp, mmseqs, args):
         if k < args.min_sites:
             continue
         rec = k / n_sites
-        lens = sorted(len(s) for sid in g for s in by_site.get(sid, []))
+        mem = [s for sid in g for s in by_site.get(sid, [])]
+        lens = sorted(len(s) for s in mem)
         if best is None or rec > best[0]:
-            best = (rec, k, lens[len(lens) // 2] if lens else 0)
+            med = lens[len(lens) // 2] if lens else 0
+            best = (rec, k, med, mem) if want_members else (rec, k, med)
     return best
 
 
@@ -155,6 +163,8 @@ def main() -> int:
     rng = random.Random(args.seed)
     tmp = args.out / f"_tmp{args.shard}"
     tmp.mkdir(exist_ok=True)
+    cdir = args.out / "candidates"
+    cdir.mkdir(exist_ok=True)
 
     # family -> bags, for the permutation null
     byfam = defaultdict(list)
@@ -169,7 +179,7 @@ def main() -> int:
             sids = rng.sample(sids, args.max_sites)
         seqs = [(sid, s) for sid in sids for s in sites[sid]]
         n = len(sids)
-        real = best_for(seqs, n, tmp, mmseqs, args)
+        real = best_for(seqs, n, tmp, mmseqs, args, want_members=True)
 
         # same-family permutation: draw regions from OTHER bags of the family,
         # matched on this bag's site count, so the decoy answers the same
@@ -184,6 +194,17 @@ def main() -> int:
             db = best_for(dseqs, n, tmp, mmseqs, args)
             if db:
                 dec.append(db[0])
+        # The candidate's own sequences, for stage 2. A median-length member
+        # is the representative: a cluster consensus would be a sequence that
+        # exists in no genome, and stage 2 searches real windows.
+        if real:
+            mem = sorted(real[3], key=len)
+            cand = mem[len(mem) // 2]
+            with open(cdir / f"{bag}.fasta", "w") as fh:
+                fh.write(f">{bag}|candidate|rec={real[0]:.4f}|"
+                         f"sites={real[1]}|len={len(cand)}\n{cand}\n")
+                for i, m in enumerate(mem[:200]):
+                    fh.write(f">{bag}|member{i}|len={len(m)}\n{m}\n")
         rows.append({
             "bag": bag, "n_sites": n,
             "n_nc_regions": len(seqs),
