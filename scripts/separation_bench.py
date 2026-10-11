@@ -108,6 +108,8 @@ def main():
     ap.add_argument("--root",
                     default="/global/scratch/users/kh36969/protein_ncrna/expand")
     ap.add_argument("--perm", type=int, default=20000)
+    ap.add_argument("--min-region", type=int, default=200,
+                    help="minimum region length for the *_long variants")
     ap.add_argument("--minerva", default="bench",
                     help="subdirectory of expand/minerva to read")
     a = ap.parse_args()
@@ -147,17 +149,27 @@ def main():
             score[b]["munin_bag_med"] = median([x[0] for x in allv])
 
     pat = os.path.join(a.root, "minerva", a.minerva, "minerva_regions_*.tsv")
-    mv = defaultdict(list)
+    mv, mv_long = defaultdict(list), defaultdict(list)
     for r in read_tsvs(pat):
         v = num(r.get("minerva_paired_fraction"))
-        if v is not None:
-            mv[r["bag"]].append(v)
+        if v is None:
+            continue
+        mv[r["bag"]].append(v)
+        if (num(r.get("length")) or 0) >= a.min_region:
+            mv_long[r["bag"]].append(v)
+    # the mean over a bag's regions, not the max: a bag with more regions gets
+    # more draws, and the max then rewards the bag for being numerous rather
+    # than for being structured
     for b, v in mv.items():
-        score[b]["minerva_paired"] = max(v)
+        score[b]["minerva_mean"] = sum(v) / len(v)
+        score[b]["minerva_max"] = max(v)
+    for b, v in mv_long.items():
+        score[b]["minerva_mean_long"] = sum(v) / len(v)
 
     keys = ["cand_len", "recurrence", "nc_per_site", "munin_cand_mean",
             "munin_cand_best50", "munin_bag_mean", "munin_bag_med",
-            "munin_bag_max50", "minerva_paired"]
+            "munin_bag_max50", "minerva_mean", "minerva_max",
+            "minerva_mean_long"]
 
     print("bags labelled: %d" % len(lab))
     for k in keys:
@@ -182,10 +194,11 @@ def main():
         print("    " + "  ".join(line))
 
     # a score that catches a family the other misses is worth multiplying
-    combos = [("cand_len", "munin_bag_med"), ("cand_len", "munin_cand_mean"),
-              ("cand_len", "minerva_paired"),
-              ("munin_bag_med", "minerva_paired"),
-              ("cand_len", "munin_bag_med", "minerva_paired")]
+    combos = [("cand_len", "minerva_mean"),
+              ("cand_len", "minerva_mean_long"),
+              ("cand_len", "munin_bag_med"),
+              ("munin_bag_med", "minerva_mean"),
+              ("cand_len", "munin_bag_med", "minerva_mean")]
     print("\n--- rank-product combinations ---")
     for cmb in combos:
         have = [b for b in lab

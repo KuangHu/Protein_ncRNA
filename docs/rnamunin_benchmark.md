@@ -23,13 +23,20 @@ IS4/5/10 69). AUC with a 20,000-shuffle label permutation.
 | score | n+ / n- | AUC | p |
 |---|---|---|---|
 | candidate length (stage 1) | 46 / 147 | **0.793** | <0.0001 |
-| Minerva paired fraction | 42 / 137 | 0.655 | 0.001 |
+| Minerva paired fraction, mean over a bag's regions | 42 / 137 | 0.819 | <0.0001 |
+| Minerva paired fraction, max over a bag's regions | 42 / 137 | 0.655 | 0.001 |
 | RNAMunin best 50 nt window | 46 / 145 | 0.648 | 0.001 |
 | RNAMunin mean per base | 46 / 145 | 0.564 | 0.097 |
 
-Length x Minerva, on the 177 bags carrying both, gives **AUC 0.811** with
-IS110 0.777, IS200/605 0.777 and group II 0.917 -- the first score that is
-not carried by one family. RNAMunin added as a third term drops it to 0.771.
+Length x Minerva, on the 177 bags carrying both, gives **AUC 0.900** with
+IS110 0.886, IS200/605 0.881 and group II 0.949 -- the first score that is
+not carried by one family. RNAMunin added as a third term drops it to 0.844.
+
+The max over a bag's regions was the wrong aggregator and cost 0.16 of AUC:
+it scores a bag on its single luckiest fold, which is a draw from the noise,
+while the mean asks whether the bag's non-coding regions are structured as a
+population. Restricting to regions of at least 200 bp -- enough sequence for
+a fold to exist -- raises Minerva alone to 0.878.
 
 Median best-50 score by family:
 
@@ -50,8 +57,8 @@ the whole of the mean-score AUC of 0.564. Within length quartiles the AUC is
 padding matters least, is at chance.
 
 Adding it to what already works makes things worse: length alone 0.793 drops
-to 0.755 when multiplied by RNAMunin, and length x Minerva 0.811 drops to
-0.771 when RNAMunin joins.
+to 0.755 when multiplied by RNAMunin, and length x Minerva 0.900 drops to
+0.844 when RNAMunin joins.
 
 ## Reading
 
