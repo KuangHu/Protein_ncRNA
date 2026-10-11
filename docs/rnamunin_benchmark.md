@@ -166,3 +166,29 @@ signal was the easy negative, not the model. The accurate statement is the
 first one: RNAMunin finds group II introns, which are Rfam RF00029 and in its
 training set, and it cannot tell an IS110 or an IS200/605 element from an IS
 element that carries no RNA at all.
+
+### What is committed, and one wrinkle in it
+
+The sweep is now a script, `rnamunin_broad_bench.py`, and its output is in
+`results/benchmarks/`. Re-running it exposes something the first pass hid:
+the top two aggregation cells are a coin toss apart on the pooled negative --
+best-50 taken as the **mean** over a bag's records gives 0.630, as the
+**median** 0.629 -- and the script, taking the larger, reports the mean cell
+while the table above quotes the median one.
+
+The per-family subsets they give are not that close:
+
+| RNA-guided set | median cell | mean cell |
+|---|---|---|
+| all three | 0.629 | 0.630 |
+| without group II | 0.584 (p 0.057) | 0.563 (p 0.119) |
+| IS110 | 0.595 (p 0.076) | 0.545 (p 0.253) |
+| IS200/605 | 0.569 (p 0.192) | 0.588 (p 0.133) |
+| group II | 0.790 | 0.873 |
+
+Both cells are committed (`rnamunin_broad_bench.txt`, `..._med.txt`) because
+nothing in the data chooses between them. The conclusion does not depend on
+the choice: group II is separated either way, neither of the other two
+reaches significance either way, and IS110 is below chance against ISL3 in
+both (0.441 / 0.379). The third decimal of the table above should be read as
+the aggregator's noise, not as a measurement.

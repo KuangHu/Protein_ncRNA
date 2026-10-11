@@ -1,0 +1,14 @@
+labelled 243 bags; skipped {'no_family': 173, 'negative_with_rna_capable_domain': 3, 'ambiguous_or_none': 14}
+bags with all three axes: 175  (37 RNA-guided, 138 RNA-free)
+
+=== each axis alone, on those bags ===
+len       AUC 0.826  p=0.0000   median +226.000  -102.000
+minerva   AUC 0.754  p=0.0000   median +0.242  -0.160
+strand    AUC 0.685  p=0.0002   median +1.000  -0.907
+
+=== combined, identical bag sets within each block ===
+len x minerva                          n=175  AUC 0.869  p=0.0000   IS110 0.838  IS200/605 0.857  GroupII 0.937
+len x minerva x strand                 n=175  AUC 0.910  p=0.0000   IS110 0.904  IS200/605 0.871  GroupII 0.954
+
+len x minerva, IR arm < 12             n=158  AUC 0.888  p=0.0000   IS110 0.865  IS200/605 0.874  GroupII 0.951
+len x minerva x strand, IR arm < 12    n=158  AUC 0.924  p=0.0000   IS110 0.915  IS200/605 0.884  GroupII 0.978

@@ -1,0 +1,11 @@
+labelled bags with a candidate score: 191
+spearman(munin, length) = 0.071
+spearman(munin, GC)     = -0.297
+munin candidate mean: AUC 0.564 p=0.0970
+GC alone:             AUC 0.579
+
+length-stratified (quartiles of candidate length)
+  len   50-75   n+=1   n-=46  AUC 0.239
+  len   75-110  n+=6   n-=41  AUC 0.659
+  len  111-166  n+=13  n-=34  AUC 0.588
+  len  167-522  n+=26  n-=24  AUC 0.490

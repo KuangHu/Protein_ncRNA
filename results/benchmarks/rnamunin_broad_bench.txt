@@ -1,0 +1,54 @@
+labelled 243 bags; skipped {'no_family': 173, 'negative_with_rna_capable_domain': 3, 'ambiguous_or_none': 14}
+RNAMunin records for 237 labelled bags: 46 RNA-guided, 191 RNA-free
+records scored: 18798
+
+=== aggregation sweep, all three RNA-guided families ===
+metric  agg   minlen     n+    n-     AUC
+mean    mean  0          46   191   0.566
+mean    mean  100        44   164   0.552
+mean    mean  200        37   115   0.539
+mean    max   0          46   191   0.515
+mean    max   100        44   164   0.567
+mean    max   200        37   115   0.573
+mean    med   0          46   191   0.563
+mean    med   100        44   164   0.537
+mean    med   200        37   115   0.536
+best50  mean  0          46   191   0.630
+best50  mean  100        44   164   0.566
+best50  mean  200        37   115   0.541
+best50  max   0          46   191   0.571
+best50  max   100        44   164   0.586
+best50  max   200        37   115   0.578
+best50  med   0          46   191   0.629
+best50  med   100        44   164   0.562
+best50  med   200        37   115   0.527
+
+best cell: best50 / mean over a bag's records / minlen 0 -> 0.630
+
+=== at best50 / mean / minlen 0 ===
+RNA-guided set              n     AUC         p
+all three                  46   0.630    0.0027
+without group II           36   0.563    0.1191
+IS110                      21   0.545    0.2529
+IS200/605                  15   0.588    0.1327
+GroupII                    10   0.873    0.0000
+
+=== head to head, each RNA-guided family vs each RNA-free one ===
+                  IS1     IS256       IS3  IS4/5/10     IS630      IS66      ISL3        Mu       Tn3
+IS110           0.720     0.576     0.679     0.448     0.635     0.873     0.379     0.460     0.476
+IS200/605       0.748     0.633     0.723     0.497     0.711     0.867     0.430     0.422     0.520
+GroupII         0.889     0.930     0.930     0.851     0.933     0.967     0.755     0.933     0.900
+
+=== median score by family ===
+GroupII      0.485  n=10   <- RNA-guided
+Mu           0.196  n=3
+ISL3         0.171  n=31
+IS4/5/10     0.136  n=68
+IS200/605    0.133  n=15   <- RNA-guided
+IS110        0.105  n=21   <- RNA-guided
+IS256        0.091  n=10
+Tn3          0.084  n=5
+IS630        0.063  n=3
+IS1          0.058  n=9
+IS3          0.057  n=53
+IS66         0.019  n=9

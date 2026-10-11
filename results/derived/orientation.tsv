@@ -1,0 +1,375 @@
+bag	len	n_window_hits	frac_plus	strand_applied	side	frac_modal_side	flipped
+CDS00006	80	0					
+CDS00014	53	4	0.500	as_stored	upstream	0.500	0
+CDS00030	74	2	0.000	revcomp	overlaps_tnp	1.000	1
+CDS00037	61	0					
+CDS00041	69	1	1.000	as_stored	downstream	1.000	0
+CDS00061	74	0					
+CDS00063	91	1	1.000	as_stored	upstream	1.000	0
+CDS00064	189	3	1.000	as_stored	upstream	1.000	0
+CDS00071	92	1	0.000	revcomp	downstream	1.000	1
+CDS00073	88	5	1.000	as_stored	upstream	1.000	0
+CDS00076	67	4	0.500	as_stored	upstream	0.500	0
+CDS00092	69	0					
+CDS00113	58	16	0.062	revcomp	upstream	1.000	1
+CDS00134	86	12	1.000	as_stored	upstream	0.917	0
+CDS00140	57	65	0.000	revcomp	upstream	1.000	1
+CDS00150	80	0					
+CDS00153	61	3	0.000	revcomp	upstream	0.667	1
+CDS00205	95	2	0.000	revcomp	upstream	1.000	1
+CDS00226	104	22	0.227	revcomp	upstream	0.727	1
+CDS00249	160	0					
+CDS00253	75	703	1.000	as_stored	downstream	0.999	0
+CDS00327	86	0					
+CDS00336	119	0					
+CDS00338	174	0					
+CDS00343	393	175	1.000	as_stored	upstream	0.943	0
+CDS00348	138	2	1.000	as_stored	upstream	1.000	0
+CDS00351	105	31	1.000	as_stored	upstream	0.935	0
+CDS00440	121	755	0.502	as_stored	overlaps_tnp	0.503	0
+CDS00445	145	5	0.800	as_stored	upstream	1.000	0
+CDS00553	109	25	0.800	as_stored	upstream	0.720	0
+CDS00577	125	18	0.167	revcomp	overlaps_tnp	0.611	1
+CDS00707	250	32	0.094	revcomp	overlaps_tnp	0.500	1
+CDS00711	137	45	0.000	revcomp	downstream	0.956	1
+CDS00712	64	62	0.000	revcomp	upstream	0.984	1
+CDS00715	75	134	0.254	revcomp	upstream	0.746	1
+CDS00721	84	62	0.984	as_stored	upstream	0.952	0
+CDS00724	139	10	1.000	as_stored	upstream	1.000	0
+CDS00727	95	17	1.000	as_stored	upstream	1.000	0
+CDS00729	64	71	0.014	revcomp	upstream	0.958	1
+CDS00730	111	5	0.800	as_stored	upstream	1.000	0
+CDS00731	275	8	0.625	as_stored	downstream	0.625	0
+CDS00733	144	52	0.462	revcomp	overlaps_tnp	0.904	1
+CDS00749	377	1	0.000	revcomp	overlaps_tnp	1.000	1
+CDS00770	146	5	0.000	revcomp	upstream	1.000	1
+CDS00777	96	2	0.000	revcomp	downstream	1.000	1
+CDS00787	95	7	0.286	revcomp	upstream	0.714	1
+CDS00790	173	4	0.750	as_stored	upstream	1.000	0
+CDS00796	126	540	0.998	as_stored	downstream	0.996	0
+CDS00809	60	32	0.031	revcomp	downstream	0.969	1
+CDS00814	183	15	0.000	revcomp	upstream	1.000	1
+CDS00816	124	131	0.481	revcomp	upstream	0.962	1
+CDS00818	57	228	0.614	as_stored	upstream	0.610	0
+CDS00830	51	0					
+CDS00831	92	39	0.026	revcomp	upstream	0.974	1
+CDS00845	75	527	0.011	revcomp	upstream	0.989	1
+CDS00846	50	1210	0.995	as_stored	upstream	0.877	0
+CDS00849	56	41	0.976	as_stored	upstream	0.780	0
+CDS00857	89	0					
+CDS00869	145	3	1.000	as_stored	downstream	1.000	0
+CDS00877	127	1	1.000	as_stored	downstream	1.000	0
+CDS00881	288	220	0.014	revcomp	overlaps_tnp	0.668	1
+CDS00897	96	2	1.000	as_stored	overlaps_tnp	1.000	0
+CDS00900	210	0					
+CDS00902	112	2	1.000	as_stored	upstream	0.500	0
+CDS00905	103	291	0.010	revcomp	upstream	1.000	1
+CDS00914	57	33	1.000	as_stored	upstream	1.000	0
+CDS00917	62	2385	0.559	as_stored	upstream	0.535	0
+CDS00932	369	75	0.000	revcomp	upstream	1.000	1
+CDS00936	85	48	1.000	as_stored	upstream	0.958	0
+CDS00943	103	730	0.995	as_stored	downstream	0.968	0
+CDS00944	357	34	0.059	revcomp	overlaps_tnp	0.735	1
+CDS00949	227	25	0.000	revcomp	upstream	1.000	1
+CDS00950	117	1	0.000	revcomp	overlaps_tnp	1.000	1
+CDS00960	53	48	0.042	revcomp	downstream	0.958	1
+CDS00961	65	7770	0.505	as_stored	downstream	0.495	0
+CDS00964	364	50	0.060	revcomp	overlaps_tnp	0.940	1
+CDS00970	116	232	0.444	revcomp	upstream	0.970	1
+CDS00977	60	49	0.980	as_stored	overlaps_tnp	0.816	0
+CDS00985	140	2	0.500	as_stored	downstream	0.500	0
+CDS00991	116	165	0.067	revcomp	overlaps_tnp	0.764	1
+CDS01011	212	1629	0.006	revcomp	upstream	0.379	1
+CDS01024	115	1	0.000	revcomp	upstream	1.000	1
+CDS01031	141	10	0.900	as_stored	upstream	0.600	0
+CDS01040	159	48	0.000	revcomp	upstream	1.000	1
+CDS01044	97	277	0.018	revcomp	overlaps_tnp	0.899	1
+CDS01045	137	6	0.167	revcomp	overlaps_tnp	0.833	1
+CDS01056	360	52	1.000	as_stored	overlaps_tnp	0.577	0
+CDS01070	300	5	0.000	revcomp	overlaps_tnp	0.600	1
+CDS01081	100	271	0.550	as_stored	upstream	0.542	0
+CDS01101	63	1008	0.000	revcomp	upstream	0.996	1
+CDS01102	285	3	0.333	revcomp	overlaps_tnp	1.000	1
+CDS01112	51	2	0.000	revcomp	upstream	1.000	1
+CDS01113	73	1	0.000	revcomp	downstream	1.000	1
+CDS01140	360	2	0.000	revcomp	downstream	1.000	1
+CDS01144	245	1324	0.005	revcomp	overlaps_tnp	0.859	1
+CDS01146	138	1889	0.535	as_stored	downstream	0.520	0
+CDS01147	271	22	0.000	revcomp	upstream	1.000	1
+CDS01158	66	0					
+CDS01162	338	4	0.250	revcomp	upstream	1.000	1
+CDS01173	102	79	0.481	revcomp	overlaps_tnp	0.620	1
+CDS01174	258	63	1.000	as_stored	downstream	0.889	0
+CDS01183	266	11	0.000	revcomp	upstream	1.000	1
+CDS01199	86	436	1.000	as_stored	downstream	0.500	0
+CDS01208	85	36	0.972	as_stored	downstream	0.778	0
+CDS01224	109	4	0.500	as_stored	upstream	0.500	0
+CDS01241	392	234	0.004	revcomp	overlaps_tnp	0.872	1
+CDS01245	147	0					
+CDS01264	86	1516	0.436	revcomp	upstream	0.473	1
+CDS01274	176	128	1.000	as_stored	upstream	0.969	0
+CDS01275	116	16	0.500	as_stored	upstream	0.938	0
+CDS01284	116	145	1.000	as_stored	downstream	0.993	0
+CDS01288	163	174	0.960	as_stored	upstream	0.954	0
+CDS01294	56	0					
+CDS01296	168	0					
+CDS01304	211	39	0.641	as_stored	upstream	1.000	0
+CDS01305	72	90	0.989	as_stored	upstream	0.989	0
+CDS01324	91	101	1.000	as_stored	upstream	0.990	0
+CDS01327	57	27	0.074	revcomp	downstream	0.741	1
+CDS01335	187	25	0.320	revcomp	downstream	0.800	1
+CDS01359	91	34	0.971	as_stored	upstream	0.824	0
+CDS01433	271	11	0.818	as_stored	downstream	0.636	0
+CDS01463	191	1	0.000	revcomp	overlaps_tnp	1.000	1
+CDS01470	427	46	0.717	as_stored	upstream	0.891	0
+CDS01475	166	83	0.000	revcomp	downstream	0.855	1
+CDS01479	300	5	0.800	as_stored	downstream	0.400	0
+CDS01484	182	7	0.429	revcomp	overlaps_tnp	0.571	1
+CDS01515	154	13	0.231	revcomp	overlaps_tnp	0.846	1
+CDS01532	249	50	0.960	as_stored	upstream	0.760	0
+CDS01554	56	25	0.240	revcomp	upstream	0.760	1
+CDS01605	64	23	0.000	revcomp	upstream	0.870	1
+CDS01610	86	372	0.997	as_stored	downstream	0.995	0
+CDS01632	97	78	0.000	revcomp	upstream	1.000	1
+CDS01669	65	539	0.998	as_stored	upstream	0.996	0
+CDS01691	176	1617	0.007	revcomp	overlaps_tnp	0.352	1
+CDS01732	75	173	0.000	revcomp	upstream	1.000	1
+CDS01790	112	8	1.000	as_stored	downstream	1.000	0
+CDS01868	249	1087	0.999	as_stored	upstream	0.991	0
+CDS01881	91	711	0.512	as_stored	upstream	0.689	0
+CDS01899	64	12	0.750	as_stored	upstream	0.833	0
+CDS01903	166	63	0.540	as_stored	overlaps_tnp	0.556	0
+CDS01929	191	9	0.111	revcomp	downstream	0.667	1
+CDS02152	146	290	0.317	revcomp	downstream	0.655	1
+CDS02200	67	173	1.000	as_stored	upstream	1.000	0
+CDS02202	107	61	0.984	as_stored	downstream	0.984	0
+CDS02442	254	664	0.002	revcomp	downstream	0.932	1
+CDS02493	112	5	0.000	revcomp	upstream	0.600	1
+CDS02499	67	49	0.959	as_stored	overlaps_tnp	0.551	0
+CDS02502	68	0					
+CDS02526	67	22	0.909	as_stored	upstream	0.864	0
+CDS02557	135	652	0.997	as_stored	upstream	0.936	0
+CDS02560	138	338	0.003	revcomp	upstream	0.997	1
+CDS02562	75	1	0.000	revcomp	downstream	1.000	1
+CDS02566	185	1	0.000	revcomp	upstream	1.000	1
+CDS02588	158	28	0.679	as_stored	upstream	0.679	0
+CDS02598	252	1	1.000	as_stored	upstream	1.000	0
+CDS02611	75	26	0.038	revcomp	downstream	1.000	1
+CDS02655	274	2	0.500	as_stored	upstream	0.500	0
+CDS02674	305	2	0.500	as_stored	downstream	0.500	0
+CDS02705	125	186	0.005	revcomp	upstream	0.989	1
+CDS02709	73	51	0.118	revcomp	upstream	0.804	1
+CDS02717	134	151	0.020	revcomp	upstream	0.894	1
+CDS02750	130	28	0.000	revcomp	downstream	0.714	1
+CDS02805	58	743	0.491	revcomp	downstream	0.513	1
+CDS02832	101	3	0.667	as_stored	upstream	0.667	0
+CDS02849	131	191	0.356	revcomp	downstream	0.581	1
+CDS02850	101	265	0.234	revcomp	upstream	0.766	1
+CDS02855	253	427	1.000	as_stored	upstream	0.508	0
+CDS02859	136	205	0.015	revcomp	upstream	0.932	1
+CDS02863	189	48	0.021	revcomp	downstream	0.521	1
+CDS02864	133	17	0.412	revcomp	upstream	0.412	1
+CDS02882	102	69	0.710	as_stored	upstream	0.638	0
+CDS02894	161	81	0.049	revcomp	upstream	0.506	1
+CDS02896	145	201	0.985	as_stored	upstream	0.950	0
+CDS02902	161	193	0.047	revcomp	downstream	0.927	1
+CDS02903	382	133	0.023	revcomp	downstream	0.985	1
+CDS02904	122	363	0.455	revcomp	upstream	0.956	1
+CDS02910	144	290	0.024	revcomp	upstream	0.955	1
+CDS02912	96	114	0.474	revcomp	overlaps_tnp	0.912	1
+CDS02926	119	2238	0.319	revcomp	overlaps_tnp	0.602	1
+CDS02932	99	37	0.973	as_stored	upstream	0.973	0
+CDS02933	150	112	0.527	as_stored	downstream	1.000	0
+CDS02942	67	2	0.500	as_stored	overlaps_tnp	0.500	0
+CDS02953	109	57	0.561	as_stored	overlaps_tnp	0.579	0
+CDS02971	126	102	0.990	as_stored	upstream	1.000	0
+CDS02973	94	162	0.784	as_stored	upstream	0.784	0
+CDS02978	201	280	0.500	as_stored	upstream	0.507	0
+CDS02982	90	227	0.471	revcomp	upstream	0.498	1
+CDS02988	101	149	0.624	as_stored	downstream	0.617	0
+CDS02998	76	100	0.000	revcomp	upstream	1.000	1
+CDS03004	283	78	0.013	revcomp	downstream	0.936	1
+CDS03009	122	328	0.598	as_stored	upstream	0.582	0
+CDS03026	160	44	0.000	revcomp	downstream	1.000	1
+CDS03053	186	89	0.652	as_stored	downstream	0.663	0
+CDS03068	97	254	0.299	revcomp	upstream	0.669	1
+CDS03071	372	337	0.786	as_stored	downstream	0.685	0
+CDS03080	86	83	0.964	as_stored	downstream	0.627	0
+CDS03094	96	924	0.543	as_stored	overlaps_tnp	0.553	0
+CDS03122	62	1634	0.712	as_stored	downstream	0.717	0
+CDS03205	1671	17	1.000	as_stored	upstream	0.941	0
+CDS03280	161	4	0.250	revcomp	downstream	0.750	1
+CDS03290	97	6	0.000	revcomp	overlaps_tnp	1.000	1
+CDS03294	52	2	1.000	as_stored	overlaps_tnp	1.000	0
+CDS03521	147	14	1.000	as_stored	downstream	0.929	0
+CDS03578	285	580	0.519	as_stored	upstream	0.409	0
+CDS03579	56	580	0.007	revcomp	upstream	0.959	1
+CDS03583	172	298	1.000	as_stored	upstream	0.591	0
+CDS03584	263	27	0.000	revcomp	downstream	0.963	1
+CDS03597	286	666	0.002	revcomp	downstream	0.502	1
+CDS03613	116	237	0.000	revcomp	downstream	0.776	1
+CDS03618	101	8	1.000	as_stored	upstream	1.000	0
+CDS03629	141	69	0.725	as_stored	overlaps_tnp	0.551	0
+CDS03630	336	490	1.000	as_stored	upstream	0.500	0
+CDS03635	185	835	0.000	revcomp	upstream	0.529	1
+CDS03657	92	25	0.520	as_stored	upstream	0.640	0
+CDS03660	336	184	0.413	revcomp	upstream	0.549	1
+CDS03662	65	356	0.705	as_stored	downstream	0.702	0
+CDS03670	175	3028	1.000	as_stored	upstream	0.515	0
+CDS03679	409	582	0.976	as_stored	downstream	1.000	0
+CDS03695	220	115	0.000	revcomp	downstream	1.000	1
+CDS03730	136	1161	0.003	revcomp	upstream	0.503	1
+CDS03759	375	291	1.000	as_stored	upstream	0.983	0
+CDS03829	68	1983	0.000	revcomp	upstream	0.998	1
+CDS03834	522	7	0.429	revcomp	downstream	0.571	1
+CDS03835	140	210	0.490	revcomp	upstream	0.510	1
+CDS03843	206	379	0.024	revcomp	downstream	0.480	1
+CDS03861	334	283	0.000	revcomp	upstream	1.000	1
+CDS03865	161	323	0.000	revcomp	upstream	0.997	1
+CDS03871	367	7	0.000	revcomp	upstream	1.000	1
+CDS03883	131	132	0.008	revcomp	downstream	0.992	1
+CDS03889	192	1	1.000	as_stored	downstream	1.000	0
+CDS03940	100	0					
+CDS03951	193	36	0.972	as_stored	upstream	1.000	0
+CDS03979	160	48	0.500	as_stored	upstream	0.500	0
+CDS03980	155	1299	0.000	revcomp	upstream	0.976	1
+CDS03992	236	381	0.997	as_stored	downstream	0.995	0
+CDS04009	211	0					
+CDS04037	102	195	0.913	as_stored	downstream	0.882	0
+CDS04054	188	160	0.988	as_stored	upstream	1.000	0
+CDS04077	65	746	1.000	as_stored	downstream	0.987	0
+CDS04091	65	1572	0.614	as_stored	downstream	0.510	0
+CDS04097	140	389	1.000	as_stored	upstream	1.000	0
+CDS04236	65	432	0.377	revcomp	upstream	0.618	1
+CDS04246	226	105	1.000	as_stored	upstream	1.000	0
+CDS04298	251	371	0.976	as_stored	downstream	0.970	0
+CDS04333	68	3247	0.000	revcomp	downstream	0.495	1
+CDS04337	96	427	1.000	as_stored	overlaps_tnp	0.871	0
+CDS04489	281	189	0.000	revcomp	upstream	0.989	1
+CDS04553	125	17	0.824	as_stored	downstream	0.765	0
+CDS04614	245	1191	0.998	as_stored	downstream	0.943	0
+CDS04651	222	95	0.505	as_stored	downstream	0.937	0
+CDS04693	62	378	0.971	as_stored	downstream	0.971	0
+CDS04694	69	101	0.000	revcomp	upstream	0.970	1
+CDS04709	152	214	0.636	as_stored	downstream	0.584	0
+CDS04754	52	95	0.000	revcomp	upstream	1.000	1
+CDS04761	221	139	0.072	revcomp	upstream	0.928	1
+CDS04826	364	119	1.000	as_stored	upstream	0.950	0
+CDS04923	285	154	0.026	revcomp	overlaps_tnp	0.961	1
+CDS04944	116	11	0.000	revcomp	downstream	1.000	1
+CDS04971	97	0					
+CDS05032	1585	1	0.000	revcomp	downstream	1.000	1
+CDS05292	96	32	1.000	as_stored	upstream	0.969	0
+CDS05339	247	353	0.008	revcomp	downstream	0.538	1
+CDS05374	55	273	0.853	as_stored	upstream	0.817	0
+CDS05384	79	43	0.977	as_stored	downstream	1.000	0
+CDS05474	69	302	1.000	as_stored	upstream	0.974	0
+CDS05629	263	1057	0.000	revcomp	downstream	0.513	1
+CDS05775	386	0					
+CDS05789	248	4	1.000	as_stored	overlaps_tnp	0.500	0
+CDS05835	137	0					
+CDS05955	164	3	0.667	as_stored	downstream	0.667	0
+CDS05957	57	0					
+CDS05958	167	8	0.125	revcomp	downstream	0.500	1
+CDS05964	181	12	0.250	revcomp	downstream	1.000	1
+CDS05978	135	5	0.600	as_stored	downstream	0.800	0
+CDS05996	155	0					
+CDS06015	81	4	0.250	revcomp	downstream	0.750	1
+CDS06022	62	276	0.797	as_stored	upstream	0.971	0
+CDS06024	203	5	1.000	as_stored	upstream	1.000	0
+CDS06050	87	0					
+CDS06051	145	1	0.000	revcomp	overlaps_tnp	1.000	1
+CDS06052	108	14	0.429	revcomp	upstream	0.571	1
+CDS06053	164	0					
+CDS06060	57	5	0.800	as_stored	downstream	0.800	0
+CDS06067	194	37	0.784	as_stored	upstream	0.811	0
+CDS06075	80	3	0.000	revcomp	downstream	1.000	1
+CDS06104	110	0					
+CDS06110	83	2	0.500	as_stored	overlaps_tnp	0.500	0
+CDS06111	121	0					
+CDS06117	55	1	1.000	as_stored	overlaps_tnp	1.000	0
+CDS06120	98	0					
+CDS06127	408	0					
+CDS06213	84	0					
+CDS06272	80	4	0.750	as_stored	upstream	0.500	0
+CDS06289	71	66	0.227	revcomp	downstream	0.530	1
+CDS06322	111	2	0.000	revcomp	upstream	1.000	1
+CDS06382	94	303	0.007	revcomp	upstream	0.997	1
+CDS06387	141	4	0.000	revcomp	downstream	1.000	1
+CDS06397	127	2	0.500	as_stored	downstream	0.500	0
+CDS06518	275	4	0.000	revcomp	downstream	0.750	1
+CDS06540	247	4	1.000	as_stored	overlaps_tnp	0.750	0
+CDS06552	172	29	0.000	revcomp	downstream	0.724	1
+CDS06589	115	7	0.571	as_stored	downstream	0.571	0
+CDS06593	235	0					
+CDS06608	139	0					
+CDS06626	232	2	1.000	as_stored	downstream	0.500	0
+CDS06637	91	0					
+CDS06693	60	4	0.000	revcomp	downstream	1.000	1
+CDS06710	265	3	1.000	as_stored	upstream	0.667	0
+CDS06711	180	8	0.000	revcomp	upstream	0.875	1
+CDS06712	52	7	0.714	as_stored	downstream	0.429	0
+CDS06717	216	3	0.333	revcomp	overlaps_tnp	1.000	1
+CDS06721	59	1	1.000	as_stored	downstream	1.000	0
+CDS06723	369	7	0.571	as_stored	downstream	0.571	0
+CDS06778	262	0					
+CDS06779	157	6	1.000	as_stored	overlaps_tnp	1.000	0
+CDS06850	59	18	0.056	revcomp	upstream	0.944	1
+CDS06851	80	71	0.296	revcomp	downstream	0.704	1
+CDS06871	185	35	0.486	revcomp	downstream	0.743	1
+CDS06917	142	9	0.667	as_stored	upstream	0.778	0
+CDS06990	73	1457	0.555	as_stored	upstream	0.552	0
+CDS06993	119	11	0.909	as_stored	upstream	0.909	0
+CDS07007	114	0					
+CDS07049	101	85	0.306	revcomp	downstream	0.659	1
+CDS07175	104	6	1.000	as_stored	upstream	0.500	0
+CDS07176	101	107	0.224	revcomp	upstream	0.776	1
+CDS07199	200	0					
+CDS07222	200	38	0.000	revcomp	upstream	1.000	1
+CDS07229	123	0					
+CDS07238	100	84	0.607	as_stored	upstream	0.619	0
+CDS07245	218	21	0.667	as_stored	downstream	0.667	0
+CDS07270	356	1	1.000	as_stored	overlaps_tnp	1.000	0
+CDS07287	195	10	0.500	as_stored	overlaps_tnp	0.800	0
+CDS07341	323	0					
+CDS07349	103	2	1.000	as_stored	downstream	0.500	0
+CDS07355	315	21	1.000	as_stored	overlaps_tnp	0.524	0
+CDS07411	60	1	1.000	as_stored	upstream	1.000	0
+CDS07413	113	3	0.667	as_stored	downstream	0.333	0
+CDS07429	109	71	0.380	revcomp	downstream	0.972	1
+CDS07465	125	1	0.000	revcomp	upstream	1.000	1
+CDS07479	723	115	0.957	as_stored	upstream	0.922	0
+CDS07628	297	0					
+CDS07780	278	1	1.000	as_stored	overlaps_tnp	1.000	0
+CDS07787	275	7	0.571	as_stored	downstream	0.857	0
+CDS07834	275	4	1.000	as_stored	overlaps_tnp	1.000	0
+CDS07916	938	0					
+CDS07956	107	74	0.905	as_stored	upstream	0.757	0
+CDS07957	262	725	0.000	revcomp	downstream	0.501	1
+CDS07959	95	352	0.000	revcomp	upstream	0.841	1
+CDS07967	209	77	0.000	revcomp	upstream	1.000	1
+CDS07978	633	812	0.000	revcomp	downstream	0.504	1
+CDS07989	65	143	0.594	as_stored	upstream	0.413	0
+CDS08029	136	79	0.000	revcomp	downstream	1.000	1
+CDS08045	574	76	0.974	as_stored	upstream	1.000	0
+CDS08083	264	175	0.789	as_stored	upstream	0.983	0
+CDS08108	191	594	0.002	revcomp	upstream	0.975	1
+CDS08110	128	139	1.000	as_stored	downstream	1.000	0
+CDS08255	336	254	0.280	revcomp	upstream	1.000	1
+CDS08318	109	29	1.000	as_stored	downstream	0.931	0
+CDS08405	117	5	0.200	revcomp	downstream	0.600	1
+CDS08412	232	4	0.500	as_stored	downstream	0.500	0
+CDS08418	130	23	0.304	revcomp	downstream	0.478	1
+CDS08420	56	1	0.000	revcomp	upstream	1.000	1
+CDS08464	191	5	0.600	as_stored	upstream	0.400	0
+CDS08478	57	1	1.000	as_stored	downstream	1.000	0
+CDS08505	124	9	1.000	as_stored	downstream	1.000	0
+CDS08527	117	2	1.000	as_stored	upstream	1.000	0
+CDS08546	73	1	0.000	revcomp	overlaps_tnp	1.000	1
+CDS08570	280	4	0.250	revcomp	upstream	0.750	1
+CDS08574	132	15	0.400	revcomp	downstream	1.000	1
+CDS08584	135	2	0.000	revcomp	overlaps_tnp	0.500	1
+CDS08607	124	7	0.429	revcomp	downstream	0.857	1
+CDS08613	197	1	1.000	as_stored	upstream	1.000	0
+CDS08631	124	3	1.000	as_stored	downstream	1.000	0
+CDS08648	214	1	1.000	as_stored	overlaps_tnp	1.000	0

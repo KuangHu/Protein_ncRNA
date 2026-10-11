@@ -1,0 +1,30 @@
+bags labelled: 195
+cand_len             n+=46   n-=147  med+ 191       med- 96        AUC 0.793  p=0.0000
+    IS110 21:0.879  IS200/605 15:0.634  GroupII 10:0.849  IS1 9:med 86  IS3 69:med 86  IS4/5/10 69:med 116
+recurrence           n+=46   n-=147  med+ 0.9834    med- 0.8387    AUC 0.608  p=0.0110
+    IS110 21:0.636  IS200/605 15:0.557  GroupII 10:0.627  IS1 9:med 1  IS3 69:med 0.7828  IS4/5/10 69:med 0.9545
+nc_per_site          n+=46   n-=147  med+ 1.99      med- 1.574     AUC 0.649  p=0.0011
+    IS110 21:0.631  IS200/605 15:0.610  GroupII 10:0.748  IS1 9:med 1.2  IS3 69:med 1.605  IS4/5/10 69:med 1.643
+munin_cand_mean      n+=46   n-=145  med+ 0.04943   med- 0.03002   AUC 0.564  p=0.0970
+    IS110 21:0.529  IS200/605 15:0.498  GroupII 10:0.733  IS1 9:med 0.01501  IS3 68:med 0.02491  IS4/5/10 68:med 0.04944
+munin_cand_best50    n+=46   n-=145  med+ 0.1388    med- 0.05935   AUC 0.648  p=0.0013
+    IS110 21:0.653  IS200/605 15:0.544  GroupII 10:0.794  IS1 9:med 0.02087  IS3 68:med 0.03354  IS4/5/10 68:med 0.09481
+munin_bag_mean       n+=46   n-=145  med+ 0.05615   med- 0.04927   AUC 0.592  p=0.0300
+    IS110 21:0.482  IS200/605 15:0.579  GroupII 10:0.843  IS1 9:med 0.02357  IS3 68:med 0.0334  IS4/5/10 68:med 0.06341
+munin_bag_med        n+=46   n-=145  med+ 0.04665   med- 0.0266    AUC 0.586  p=0.0384
+    IS110 21:0.531  IS200/605 15:0.551  GroupII 10:0.755  IS1 9:med 0.0168  IS3 68:med 0.02086  IS4/5/10 68:med 0.04809
+munin_bag_max50      n+=46   n-=145  med+ 0.4852    med- 0.3691    AUC 0.587  p=0.0376
+    IS110 21:0.468  IS200/605 15:0.550  GroupII 10:0.891  IS1 9:med 0.2066  IS3 68:med 0.3415  IS4/5/10 68:med 0.482
+minerva_mean         n+=42   n-=137  med+ 0.2441    med- 0.1381    AUC 0.819  p=0.0000
+    IS110 21:0.750  IS200/605 11:0.885  GroupII 10:0.889  IS1 9:med 0.07753  IS3 66:med 0.1347  IS4/5/10 62:med 0.1562
+minerva_max          n+=42   n-=137  med+ 0.4348    med- 0.3564    AUC 0.655  p=0.0014
+    IS110 21:0.545  IS200/605 11:0.720  GroupII 10:0.812  IS1 9:med 0.1806  IS3 66:med 0.3565  IS4/5/10 62:med 0.3767
+minerva_mean_long    n+=41   n-=101  med+ 0.2582    med- 0.117     AUC 0.878  p=0.0000
+    IS110 20:0.839  IS200/605 11:0.887  GroupII 10:0.946  IS1 8:med 0.0522  IS3 51:med 0.122  IS4/5/10 42:med 0.1231
+
+--- rank-product combinations ---
+cand_lenxminerva_mean                         n=177  n+=42  AUC 0.900 p=0.0000  IS110 21:0.886  IS200/605 11:0.881  GroupII 10:0.949
+cand_lenxminerva_mean_long                    n=142  n+=41  AUC 0.904 p=0.0000  IS110 20:0.905  IS200/605 11:0.862  GroupII 10:0.947
+cand_lenxmunin_bag_med                        n=191  n+=46  AUC 0.755 p=0.0000  IS110 21:0.789  IS200/605 15:0.628  GroupII 10:0.876
+munin_bag_medxminerva_mean                    n=175  n+=42  AUC 0.746 p=0.0000  IS110 21:0.680  IS200/605 11:0.754  GroupII 10:0.877
+cand_lenxmunin_bag_medxminerva_mean           n=175  n+=42  AUC 0.844 p=0.0000  IS110 21:0.827  IS200/605 11:0.797  GroupII 10:0.929

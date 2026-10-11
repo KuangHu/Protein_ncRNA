@@ -60,3 +60,20 @@ largest non-coding fraction of any family measured. It is either a blind spot
 or an undescribed RNA, and this benchmark cannot tell which.
 
 RNAMunin stays out: it subtracts at every level tested.
+
+## Committed output
+
+`final_separation_bench.py`, output in `results/benchmarks/`. The combined
+table above reproduces exactly. The single-axis line differs, because the
+script measures each axis on the 175 bags that carry **all three** rather
+than on every bag carrying that one axis:
+
+```
+            this script (n=175)     as first reported
+cand_len         0.826                   0.789
+minerva          0.754                   0.752
+strand           0.685                   0.703
+```
+
+The common-bag version is the one to quote: it is the set the combinations
+are scored on, so the axes and their combinations are then comparable.
