@@ -115,3 +115,54 @@ moves RNAMunin only from 0.658 to 0.669.
 
 Tested at both the raw and the IR-cleaned level, with the best aggregation
 RNAMunin has. It subtracts in both. It stays out.
+
+## Against every other IS family
+
+The sweep above used the six-family negative. Repeated against all twelve --
+ISL3, IS256, IS66, Mu, Tn3 and IS630 added -- 46 RNA-guided bags against 191.
+Eighteen aggregation cells again; the best is best-50 scored per record and
+taken as the median over a bag's records.
+
+| RNA-guided set | n | AUC | p |
+|---|---|---|---|
+| all three | 46 | 0.631 | 0.0030 |
+| **without group II** | 36 | **0.586** | **0.0517** |
+| IS110 only | 21 | 0.592 | 0.0835 |
+| IS200/605 only | 15 | 0.578 | 0.1613 |
+| group II only | 10 | **0.792** | 0.0005 |
+
+**Group II is the only family RNAMunin separates at all.** Take it out and
+nothing is left that reaches significance.
+
+Head to head against individual RNA-free families:
+
+```
+IS110     vs ISL3       0.439      IS110     vs IS4/5/10   0.504
+IS200/605 vs ISL3       0.424      IS200/605 vs IS4/5/10   0.496
+IS110     vs Mu         0.492
+```
+
+At chance against IS4/5/10 and Mu, and **below chance against ISL3** -- an
+RNA-free family that RNAMunin scores higher than either RNA-guided one.
+Median score by family makes it plain:
+
+```
+GroupII    0.286        IS4/5/10   0.094
+Mu         0.146        Tn3        0.084
+ISL3       0.136        IS1        0.061
+IS200/605  0.108        IS256      0.054
+IS110      0.107        IS630      0.045
+                        IS3        0.037
+                        IS66       0.008
+```
+
+Two RNA-free families outrank both IS110 and IS200/605.
+
+### This also retires the earlier correction
+
+On the narrow negative IS110 came in at 0.660 and I called it "a weak IS110
+signal". Against the harder negative it is 0.592 at p = 0.084. The weak
+signal was the easy negative, not the model. The accurate statement is the
+first one: RNAMunin finds group II introns, which are Rfam RF00029 and in its
+training set, and it cannot tell an IS110 or an IS200/605 element from an IS
+element that carries no RNA at all.
