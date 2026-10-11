@@ -71,3 +71,47 @@ level, which is why a blind caller is needed for them at all.
 Caveat on fit: upstream scans whole contigs and these are short fragments
 padded circularly, so this is slightly off-label use. The length-quartile
 breakdown is the control for that and it does not rescue the result.
+
+## Re-tested with the treatment Minerva got
+
+Minerva only worked once it was aggregated by the mean over a bag's regions
+and restricted to regions long enough to fold. RNAMunin was first scored
+without either, so it was re-run across 20 settings: mean and max, best-50
+and per-base mean, at minimum region lengths of 0, 100, 150, 200 and 300 bp.
+
+Best cell: minimum length 0, best-50, mean over regions, **AUC 0.656**. The
+length cutoff makes RNAMunin *worse* (0.656 -> 0.565 at 150 bp -> 0.546 at
+200 bp) where it made Minerva better (0.819 -> 0.878). That contrast is
+itself diagnostic: Minerva improves when given enough sequence to fold
+because it is reading a fold; RNAMunin does not, because it is not.
+
+### One correction
+
+Saying it "only sees group II introns" was too strong. Under the better
+aggregation it carries a weak IS110 signal as well:
+
+| family | RNAMunin | Minerva |
+|---|---|---|
+| IS110 | 0.660 | 0.744 |
+| IS200/605 | 0.528 | 0.882 |
+| GroupII | 0.798 | 0.886 |
+
+IS200/605 is at chance. Group II is still the strongest, which is still the
+family in its training set. And it is dominated by Minerva on all three.
+
+### It is also reading the inverted repeats
+
+Spearman(IR arm, RNAMunin best-50) = 0.254, against 0.361 for Minerva. So
+the hairpin confound is not specific to the folding model; a sequence CNN
+trained on Rfam picks up transposon ends too. Removing the long-IR bags
+moves RNAMunin only from 0.658 to 0.669.
+
+### It never helps the combination
+
+| bags | length x Minerva | + RNAMunin |
+|---|---|---|
+| all 175 | 0.898 | 0.855 |
+| IR arm < 12 (154) | **0.934** | 0.893 |
+
+Tested at both the raw and the IR-cleaned level, with the best aggregation
+RNAMunin has. It subtracts in both. It stays out.
