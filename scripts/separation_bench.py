@@ -108,6 +108,8 @@ def main():
     ap.add_argument("--root",
                     default="/global/scratch/users/kh36969/protein_ncrna/expand")
     ap.add_argument("--perm", type=int, default=20000)
+    ap.add_argument("--minerva", default="bench",
+                    help="subdirectory of expand/minerva to read")
     a = ap.parse_args()
 
     lab = families(os.path.join(a.root, "pfam", "bag_pfam.tsv"))
@@ -144,7 +146,7 @@ def main():
             score[b]["munin_bag_max50"] = max(x[1] for x in allv)
             score[b]["munin_bag_med"] = median([x[0] for x in allv])
 
-    pat = os.path.join(a.root, "minerva", "datapoor", "minerva_regions_*.tsv")
+    pat = os.path.join(a.root, "minerva", a.minerva, "minerva_regions_*.tsv")
     mv = defaultdict(list)
     for r in read_tsvs(pat):
         v = num(r.get("minerva_paired_fraction"))

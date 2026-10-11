@@ -20,12 +20,16 @@ IS4/5/10 69). AUC with a 20,000-shuffle label permutation.
 
 ## Result
 
-| score | AUC | p |
-|---|---|---|
-| candidate length (stage 1) | **0.793** | <0.0001 |
-| Minerva paired fraction | 0.726 | 0.006 |
-| RNAMunin best 50 nt window | 0.648 | 0.001 |
-| RNAMunin mean per base | 0.564 | 0.097 |
+| score | n+ / n- | AUC | p |
+|---|---|---|---|
+| candidate length (stage 1) | 46 / 147 | **0.793** | <0.0001 |
+| Minerva paired fraction | 42 / 137 | 0.655 | 0.001 |
+| RNAMunin best 50 nt window | 46 / 145 | 0.648 | 0.001 |
+| RNAMunin mean per base | 46 / 145 | 0.564 | 0.097 |
+
+Length x Minerva, on the 177 bags carrying both, gives **AUC 0.811** with
+IS110 0.777, IS200/605 0.777 and group II 0.917 -- the first score that is
+not carried by one family. RNAMunin added as a third term drops it to 0.771.
 
 Median best-50 score by family:
 
@@ -46,8 +50,8 @@ the whole of the mean-score AUC of 0.564. Within length quartiles the AUC is
 padding matters least, is at chance.
 
 Adding it to what already works makes things worse: length alone 0.793 drops
-to 0.755 when multiplied by RNAMunin, and length x Minerva 0.817 drops to
-0.810 when RNAMunin joins.
+to 0.755 when multiplied by RNAMunin, and length x Minerva 0.811 drops to
+0.771 when RNAMunin joins.
 
 ## Reading
 
