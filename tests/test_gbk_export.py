@@ -207,3 +207,49 @@ def test_minus_strand_cases_verify_too(tmp_path):
     wd, _, _, _ = _fixture(tmp_path, strand=-1)
     out, stdout = _run(tmp_path, wd)
     assert "0 without verified genomic coordinates" in stdout
+
+
+def test_shard_merge_ignores_io_paths_but_not_scoring_params(tmp_path):
+    """Sharding changes every shard's paths and none of its scoring.
+
+    Comparing whole params dicts fires on every shard of every correct run,
+    which trains the reader to ignore the one check that would catch a shard
+    scored at the wrong threshold -- a merged table that silently mixes two
+    min_recurrence settings and whose floor is then computed across both.
+    """
+    import json as _json
+    m = importlib.util.spec_from_file_location(
+        "merge_block_shards", ROOT / "scripts" / "merge_block_shards.py")
+    mod = importlib.util.module_from_spec(m)
+    m.loader.exec_module(mod)
+
+    base = {"windows": "/a/shard_00/real", "decoys": "/a/shard_00/decoys",
+            "out": "/a/shard_00/blocks", "min_recurrence": "0.5",
+            "references": "3"}
+    other = dict(base, windows="/a/shard_01/real",
+                 decoys="/a/shard_01/decoys", out="/a/shard_01/blocks")
+    assert mod.scoring_params(base) == mod.scoring_params(other)
+
+    wrong = dict(other, min_recurrence="0.25")
+    assert mod.scoring_params(base) != mod.scoring_params(wrong)
+
+    # end to end: two shards differing only in paths must merge cleanly
+    for i, prm in enumerate((base, other)):
+        d = tmp_path / f"shard_{i:02d}"
+        (d / "blocks").mkdir(parents=True)
+        for t in ("blocks.tsv", "block_members.tsv", "clade_stats.tsv",
+                  "reference_recovery.tsv"):
+            (d / t).write_text("col\n" + f"v{i}\n")
+        (d / "discovery_summary.json").write_text(_json.dumps({
+            "real_clades": 1, "decoy_clades": 1, "real_blocks": 0,
+            "decoy_blocks": 0, "complete": True, "failures": [],
+            "params": prm}))
+    r = subprocess.run(
+        [PY, "-I", str(ROOT / "scripts" / "merge_block_shards.py"),
+         "--shards", str(tmp_path / "shard_00"), str(tmp_path / "shard_01"),
+         "--out", str(tmp_path / "merged"), "--expect-clades", "4"],
+        capture_output=True, text=True, env=ENV)
+    assert r.returncode == 0, r.stderr + r.stdout
+    got = _json.loads((tmp_path / "merged" / "discovery_summary.json").read_text())
+    assert got["complete"] is True
+    assert got["merge_problems"] == []

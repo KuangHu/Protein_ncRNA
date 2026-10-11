@@ -1,0 +1,10 @@
+# species	directory of .fna genomes
+ecoli	/global/scratch/users/kh36969/cross_ref_is_runs/results/escherichia_coli/_ncbi_symlinks
+kpneu	/global/scratch/users/kh36969/fna_ins_discovery/genomes/kpneumoniae
+efaecium	/global/scratch/users/kh36969/fna_ins_discovery/genomes_efaecium
+efaecalis	/global/scratch/users/kh36969/fna_ins_discovery/genomes_efaecalis
+senterica	/global/scratch/users/kh36969/fna_ins_discovery/genomes_senterica
+paeruginosa	/global/scratch/users/kh36969/fna_ins_discovery/genomes_paeruginosa
+sa_k24	/global/scratch/users/kh36969/fna_ins_discovery/genomes_saureus
+spneumoniae	/global/scratch/users/kh36969/fna_ins_discovery/genomes_spneumoniae
+lmonocytogenes	/global/scratch/users/kh36969/fna_ins_discovery/genomes_lmonocytogenes

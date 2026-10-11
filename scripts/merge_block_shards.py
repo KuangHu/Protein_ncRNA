@@ -28,6 +28,15 @@ from pathlib import Path
 TABLES = ["blocks.tsv", "block_members.tsv", "clade_stats.tsv",
           "reference_recovery.tsv"]
 
+# Per-shard I/O paths differ by construction -- that is what sharding is. Only
+# the parameters that change a score may be compared, or the check fires on
+# every shard of every correct run and stops meaning anything.
+PATH_KEYS = {"windows", "decoys", "out"}
+
+
+def scoring_params(p):
+    return {k: v for k, v in (p or {}).items() if k not in PATH_KEYS}
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -92,8 +101,15 @@ def main() -> int:
             incomplete.append(s.name)
         if params is None:
             params = d.get("params")
-        elif params != d.get("params"):
-            problems.append(f"{s.name}: step-4 params differ from shard 0")
+        elif scoring_params(params) != scoring_params(d.get("params")):
+            differ = sorted(
+                k for k in set(scoring_params(params))
+                | set(scoring_params(d.get("params")))
+                if scoring_params(params).get(k)
+                != scoring_params(d.get("params")).get(k))
+            problems.append(
+                f"{s.name}: step-4 scoring params differ from shard 0: "
+                f"{differ}")
 
     total = agg["real_clades"] + agg["decoy_clades"]
     if args.expect_clades and total != args.expect_clades:
